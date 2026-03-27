@@ -371,7 +371,7 @@
   <div class="wrap">
     <div class="hero">
       <h1>🏫 多比的分帳學院 🧦</h1>
-      <p>主畫面以記帳為主，查帳頁專心看誰欠誰、明細表與匯出。支援 Google Sheet、LINE 群組通知與手機操作。</p>
+      <p>提醒:下方有登打紀錄&Line通知=新增成功</p>
     </div>
 
     <div class="tabs">
@@ -569,15 +569,16 @@
         <h2 class="section-title">串接設定</h2>
         <div class="field">
           <label>Apps Script Web App URL（主系統）</label>
-          <input id="apiUrl" placeholder="請貼上主系統 GAS 的 /exec" />
+          <input id="apiUrl" placeholder="https://script.google.com/macros/s/AKfycbw0Gq6yOyj2D0H2CTQW3lkEnxDejzDnwDCmHaEXQgMWizCQcnS1FiJ7fHq9qpqSBUOn/exec" />
         </div>
         <div class="field">
           <label>群組通知網址（Cloudflare Worker）</label>
-          <input id="notifyUrl" placeholder="請貼上 workers.dev 網址" />
+          <input id="notifyUrl" placeholder="
+https://dobby-line-webhook.bace0621.workers.dev/" />
         </div>
         <div class="field">
           <label>Google Sheet ID</label>
-          <input id="sheetId" placeholder="請貼上 Google Sheet ID" oninput="renderGasCode()" />
+          <input id="sheetId" placeholder="1Wi81OjI7agPzhLoAJ8kAR7Ir1_oJNXubmqvrOZ1mgwQ" oninput="renderGasCode()" />
         </div>
         <div class="actions">
           <button class="btn-main" onclick="saveConfig()">💾 儲存設定</button>
