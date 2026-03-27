@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>多比的分帳學院</title>
+  <title>多比的分帳學院｜管理者版</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
   <style>
     :root {
@@ -370,8 +370,8 @@
 <body>
   <div class="wrap">
     <div class="hero">
-      <h1>🏫 多比的分帳學院 🧦</h1>
-      <p>小幫手多比提醒您，送出後收到line通知即為成功，或是可查詢下方登記資料唷！</p>
+      <h1>🏫 多比的分帳學院｜管理者版 🧦</h1>
+      <p>管理者版可自由切換目前使用者、付款人與清帳人，並可查看設定頁與完整資料。</p>
     </div>
 
     <div class="tabs">
@@ -462,8 +462,8 @@
       <div class="card">
         <h2 class="section-title">記帳檢查</h2>
         <div class="summary-card">
-          <div class="summary-row"><span>總金額</span><strong id="sumTotal">300</strong></div>
-          <div class="summary-row"><span>已分配</span><strong id="sumAssigned">300</strong></div>
+          <div class="summary-row"><span>總金額</span><strong id="sumTotal">0</strong></div>
+          <div class="summary-row"><span>已分配</span><strong id="sumAssigned">0</strong></div>
           <div class="summary-row"><span>差額</span><strong id="sumDiff">0</strong></div>
           <div class="summary-row"><span>狀態</span><strong id="sumStatus" class="good">✅ 正常</strong></div>
         </div>
@@ -609,6 +609,7 @@
 
   <script>
     let CURRENT_USER = 'Beth';
+    const ADMIN_DEFAULT_USER = 'Beth';
     let APP_CONFIG = { apiUrl: '', notifyUrl: '', sheetId: '' };
     let entries = [];
     let editingEntryId = null;
@@ -633,8 +634,14 @@
       try { storedUser = normalizeUserKey(localStorage.getItem(USER_STORAGE_KEY)); } catch (error) {}
       if (FORCE_ROLE) APP_ROLE = FORCE_ROLE;
       else APP_ROLE = role === 'admin' ? 'admin' : 'user';
-      CURRENT_USER = queryUser || storedUser || CURRENT_USER;
-      if (!PEOPLE.includes(CURRENT_USER)) CURRENT_USER = 'Beth';
+
+      if (APP_ROLE === 'admin') {
+        CURRENT_USER = storedUser || CURRENT_USER || ADMIN_DEFAULT_USER;
+      } else {
+        CURRENT_USER = queryUser || storedUser || CURRENT_USER;
+      }
+
+      if (!PEOPLE.includes(CURRENT_USER)) CURRENT_USER = ADMIN_DEFAULT_USER;
       try { localStorage.setItem(USER_STORAGE_KEY, CURRENT_USER); } catch (error) {}
     }
 
@@ -654,8 +661,8 @@
         settingsPage.classList.remove('hidden');
       } else {
         currentUserEl.disabled = true;
-        payerEl.disabled = true;
-        checkoutFromEl.disabled = true;
+        payerEl.disabled = false;
+        checkoutFromEl.disabled = false;
         settingsPage.classList.add('hidden');
       }
       renderCheckoutPreview();
@@ -1251,7 +1258,7 @@
       editingEntryId = null;
       document.getElementById('payer').value = CURRENT_USER;
       document.getElementById('checkoutFrom').value = CURRENT_USER;
-      document.getElementById('totalAmount').value = '300';
+      document.getElementById('totalAmount').value = '';
       document.getElementById('note').value = '';
       document.querySelector('input[name="mode"][value="split3"]').checked = true;
       refreshModeSelectionUI();
@@ -1633,8 +1640,6 @@
     refreshModeSelectionUI();
     buildDetailFields();
     applyRoleUI();
-    document.getElementById('checkoutFrom').value = 'Rainie';
-    document.getElementById('checkoutTo').value = 'Beth';
     renderCheckoutPreview();
     recalculate();
     renderHistory();
