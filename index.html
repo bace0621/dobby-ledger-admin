@@ -1,69 +1,1851 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>多比的分帳學院｜編輯者版</title>
-<style>
-:root{--bg:#fff4f8;--card:#fff;--line:#f3d6e3;--text:#4d3b46;--muted:#8f7482;--pink:#ff77a8;--pink2:#ff94bb;--soft:#fff0f6;--shadow:0 10px 24px rgba(170,105,136,.12)}
-*{box-sizing:border-box} body{margin:0;font-family:"Noto Sans TC",system-ui,sans-serif;background:linear-gradient(180deg,#fff8fb,#fff2f7);color:var(--text);padding:16px 12px 90px}
-.wrap{max-width:680px;margin:0 auto}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:16px;margin-bottom:12px}.hero{background:linear-gradient(135deg,#ffe6f0,#fffafc)}
-h1{margin:0 0 8px;font-size:24px}.muted{color:var(--muted);font-size:13px;line-height:1.6} label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin:0 0 8px}
-input,select{width:100%;border:1.5px solid #f0d5e2;border-radius:16px;padding:14px;font-size:16px;outline:none;background:#fff;color:var(--text);margin-bottom:12px} input:focus,select:focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(255,119,168,.12)}
-button{border:0;border-radius:18px;padding:14px 16px;min-height:50px;font-size:15px;font-weight:800;cursor:pointer}.btn-main{background:linear-gradient(135deg,var(--pink2),var(--pink));color:#fff;box-shadow:0 12px 24px rgba(255,111,153,.24)}.btn-sub{background:#fff;border:1.5px solid #f0d5e2;color:var(--text)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sticky{position:fixed;left:0;right:0;bottom:0;padding:10px 12px;background:rgba(255,247,251,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line)}.sticky .inner{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.hidden{display:none!important}.item{border:1px solid #f1d7e2;border-radius:16px;background:#fff;padding:12px;margin-bottom:10px}.pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#fff0f6;border:1px solid #ffd7e8;font-size:12px}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>多比的魔法分帳學院</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+  <style>
+    :root {
+      --bg: #fff8fb;
+      --card: #ffffff;
+      --text: #4b3b47;
+      --muted: #8b6f81;
+      --accent: #c7792b;
+      --gold: #d8b45c;
+      --accent-soft: #fff7ea;
+      --line: #ead7b2;
+      --ok: #2f9e44;
+      --warn: #d9485f;
+      --info: #7048e8;
+      --shadow: 0 12px 28px rgba(179, 110, 140, 0.12);
+      --radius: 22px;
+      --sticky-h: 82px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Noto Sans TC", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #fff7fb 0%, #fff2f8 46%, #fff8ec 100%);
+      color: var(--text);
+      padding: 16px 12px calc(var(--sticky-h) + 32px);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap { max-width: 560px; margin: 0 auto; }
+    .hero, .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #ffe9f3, #fff9ef);
+      padding: 18px 16px;
+    }
+    .hero h1 { margin: 0 0 8px; font-size: 24px; line-height: 1.25; }
+    .hero p { margin: 0; color: var(--muted); line-height: 1.6; font-size: 14px; }
+    .card { padding: 16px; }
+    .section-title { font-size: 16px; font-weight: 800; margin: 0 0 12px; }
+    .subtle-title { font-size: 14px; font-weight: 800; margin: 0 0 10px; }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      border: 1.5px solid #f0d5e2;
+      background: #fff;
+      color: var(--text);
+      min-height: 48px;
+      border-radius: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(255, 119, 168, 0.12);
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .field { margin-bottom: 12px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    input, select {
+      width: 100%;
+      border: 1.5px solid #f0d5e2;
+      background: #fff;
+      color: var(--text);
+      border-radius: 16px;
+      padding: 14px;
+      font-size: 16px;
+      outline: none;
+      appearance: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(255, 119, 168, 0.12);
+    }
+
+    .modes, .split-grid, .history-list, .summary-grid, .table-wrap, .settlement-list, .status-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .mode {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      border: 1.5px solid #f0d5e2;
+      border-radius: 18px;
+      padding: 14px;
+      background: #fff;
+      transition: .18s ease;
+    }
+    .mode.active {
+      border-color: var(--accent);
+      background: #fff6fa;
+      box-shadow: 0 0 0 4px rgba(255, 119, 168, 0.12);
+    }
+    .mode input[type="radio"] {
+      width: 22px;
+      height: 22px;
+      margin-top: 1px;
+      flex: 0 0 auto;
+      appearance: none;
+      -webkit-appearance: none;
+      border: 2px solid #d9b3c5;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      position: relative;
+    }
+    .mode input[type="radio"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 5px #fff;
+    }
+    .mode-content { flex: 1; }
+    .mode-title { font-size: 14px; font-weight: 800; }
+    .mode-desc { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .mode-badge {
+      display: none;
+      margin-top: 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .mode.active .mode-badge { display: inline-block; }
+
+    .split-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+    .name-chip {
+      background: #fff8ef;
+      border: 1px solid #f1ddb3;
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-weight: 800;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+    }
+
+    .actions, .double-actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .actions { grid-template-columns: 1fr 1fr; }
+    .double-actions { grid-template-columns: repeat(2, 1fr); }
+
+    button {
+      border: 0;
+      border-radius: 18px;
+      padding: 14px 16px;
+      min-height: 50px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-main {
+      background: linear-gradient(135deg, #ff8db3, #d8b45c);
+      color: white;
+      box-shadow: 0 12px 24px rgba(255, 111, 153, 0.26);
+    }
+    .btn-sub, .mini-btn {
+      background: #fff;
+      color: var(--text);
+      border: 1.5px solid #f0d5e2;
+    }
+    .btn-danger {
+      background: #fff5f5;
+      color: var(--warn);
+      border: 1.5px solid #ffd0d7;
+    }
+    .mini-btn {
+      min-height: 40px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 13px;
+    }
+
+    .helper, .muted { color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .helper { margin-top: 10px; }
+    .good { color: var(--ok); font-weight: 800; }
+    .warn { color: var(--warn); font-weight: 800; }
+    .info { color: var(--info); font-weight: 800; }
+
+    .status-card, .summary-card, .history-card, .table-card, .settlement-card, .preview-box {
+      border: 1px solid #f1d7e2;
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px;
+    }
+    .preview-box { white-space: pre-line; line-height: 1.75; }
+
+    .summary-card {
+      display: grid;
+      gap: 8px;
+      background: #fffafc;
+      border-style: dashed;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .status-card { display: grid; gap: 10px; }
+    .status-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .status-pill {
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #f7f2ff;
+      color: var(--info);
+    }
+
+    .settlement-card { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .history-card { display: grid; gap: 10px; }
+    .history-card.dimmed { opacity: 0.56; background: #fffafc; }
+    .history-card.dimmed .history-title, .history-card.dimmed .history-meta { color: #9f8a96; }
+    .history-card.dimmed .tag { opacity: 0.72; }
+    .history-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .history-title { font-size: 14px; font-weight: 800; line-height: 1.45; }
+    .history-meta { color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .history-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tag {
+      background: #fff8ef;
+      border: 1px solid #ffd9e8;
+      color: #a05c7b;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+    .tag.invalid { background: #fff5f5; color: var(--warn); border-color: #ffd0d0; }
+
+    .table-shell {
+      overflow-x: auto;
+      border: 1px solid #f1d7e2;
+      border-radius: 16px;
+      background: #fff;
+    }
+    table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 11px 10px;
+      border-bottom: 1px solid #f3e1e8;
+      text-align: left;
+      white-space: nowrap;
+    }
+    th {
+      background: #fff6fa;
+      font-weight: 800;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    td.num, th.num { text-align: right; }
+    tfoot td {
+      background: #fffafc;
+      font-weight: 800;
+    }
+
+    .sticky-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(255, 247, 251, 0.92);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid var(--line);
+      z-index: 40;
+    }
+    .sticky-inner {
+      max-width: 560px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .sticky-nav {
+      min-height: 50px;
+      border-radius: 16px;
+      border: 1.5px solid #f0d5e2;
+      background: #fff;
+      font-weight: 800;
+    }
+    .sticky-nav.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(var(--sticky-h) + 22px);
+      transform: translateX(-50%);
+      background: rgba(75, 59, 71, 0.94);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+      z-index: 99;
+    }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 480px) {
+      body { padding-inline: 10px; }
+      .hero h1 { font-size: 22px; }
+      .card { padding: 14px; }
+      .actions, .double-actions, .split-row, .history-actions, .sticky-inner, .tabs { grid-template-columns: 1fr; }
+      .history-top, .status-top, .settlement-card { flex-direction: column; align-items: flex-start; }
+      .summary-row { align-items: flex-start; }
+      button { font-size: 14px; }
+    }
+
+    .tabs { display: none !important; }
+    .hidden { display: none !important; }
+    .sticky-inner.one-button { grid-template-columns: 1fr; }
+    .history-card.dimmed { opacity: .55; filter: grayscale(.15); }
+
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card hero"><h1>🏫 多比的分帳學院</h1><div class="muted">編輯者版：可記帳、查帳、看歷史與設定。</div></div>
-
-  <section id="page-record">
-    <div class="card">
-      <label>付款人</label><select id="payer"><option>Beth</option><option>Rainie</option><option>Ann</option></select>
-      <label>總金額</label><input id="totalAmount" type="number" min="1" step="1" placeholder="請輸入金額" />
-      <label>備註</label><input id="note" placeholder="可留空" />
-      <button class="btn-main" onclick="submitEntry()">✨ 送出記帳</button>
+  <div class="wrap">
+    <div class="hero">
+      <h1>✨ 多比的魔法分帳學院 🧦</h1>
+      <p>以一點咒語整理生活帳目；Accio 記帳、Revelio 帳冊、Finite 清帳。</p>
     </div>
-    <div class="card"><div id="noticePreview" class="muted"></div></div>
-  </section>
 
-  <section id="page-ledger" class="hidden">
-    <div class="card"><h3>📊 誰欠誰</h3><div id="ledgerResult"></div></div>
-    <div class="card"><h3>🧾 歷史紀錄</h3><div id="historyList"></div></div>
-  </section>
-
-  <section id="page-settings" class="hidden">
-    <div class="card">
-      <h3>⚙️ 設定</h3>
-      <label>Apps Script Web App URL</label><input id="apiUrl" />
-      <label>LINE Worker URL</label><input id="notifyUrl" />
-      <button class="btn-main" onclick="saveConfig()">💾 儲存設定</button>
+    <div class="tabs">
+      <button class="tab-btn active" data-page="record" onclick="switchPage('record')">✒️ 登錄帳目</button>
+      <button class="tab-btn" data-page="ledger" onclick="switchPage('ledger')">📜 查閱帳冊</button>
+      <button class="tab-btn" data-page="settings" onclick="switchPage('settings')">🪄 魔法設定</button>
     </div>
-  </section>
-</div>
-<div class="sticky"><div class="inner">
-  <button class="btn-sub" onclick="switchPage('record')">🧾 記帳</button>
-  <button class="btn-sub" onclick="switchPage('ledger')">📊 查帳</button>
-  <button class="btn-sub" onclick="switchPage('settings')">⚙️ 設定</button>
-</div></div>
-<script>
-let APP_CONFIG = {
-  apiUrl: 'https://script.google.com/macros/s/AKfycbw0Gq6yOyj2D0H2CTQW3lkEnxDejzDnwDCmHaEXQgMWizCQcnS1FiJ7fHq9qpqSBUOn/exec',
-  notifyUrl: 'https://dobby-line-webhook.bace0621.workers.dev/'
-};
-let entries = [];
-const USERS = ['Beth','Rainie','Ann'];
-function syncConfig(){ document.getElementById('apiUrl').value = APP_CONFIG.apiUrl; document.getElementById('notifyUrl').value = APP_CONFIG.notifyUrl; }
-function saveConfig(){ APP_CONFIG.apiUrl=document.getElementById('apiUrl').value.trim(); APP_CONFIG.notifyUrl=document.getElementById('notifyUrl').value.trim(); localStorage.setItem('dobby_editor_config', JSON.stringify(APP_CONFIG)); alert('已儲存'); }
-function loadConfig(){ try{ const raw=localStorage.getItem('dobby_editor_config'); if(raw) APP_CONFIG = Object.assign(APP_CONFIG, JSON.parse(raw)); }catch(e){} syncConfig(); }
-function switchPage(page){ ['record','ledger','settings'].forEach(p=>document.getElementById('page-'+p).classList.toggle('hidden', p!==page)); if(page==='ledger') renderLedger(); }
-function splitEvenly(total){ const base=Math.floor(total/USERS.length); let r=total%USERS.length; return USERS.map(u=>({user:u,amount:base+(r-->0?1:0)})); }
-function buildNoticeText(entry){ return `✨ 多比記帳通知\n\n👤 ${entry.payer}\n💰 ${entry.total} 元\n📝 ${entry.note || '（無備註）'}\n\n🧾 分帳：\nBeth：${entry.allocation[0].amount}\nRainie：${entry.allocation[1].amount}\nAnn：${entry.allocation[2].amount}`; }
-async function submitEntry(){ const payer=document.getElementById('payer').value; const total=Math.round(Number(document.getElementById('totalAmount').value||0)); const note=document.getElementById('note').value.trim(); if(total<=0)return alert('請輸入大於 0 的金額'); const entry={id:'E'+Date.now(),type:'expense',createdBy:payer,payer,total,note,allocation:splitEvenly(total),status:'active',createdAt:new Date().toISOString()}; const saveRes=await fetch(APP_CONFIG.apiUrl,{method:'POST',body:JSON.stringify({action:'upsert_entry',entry})}); const saveData=await saveRes.json(); if(!saveData.ok)return alert('雲端寫入失敗：'+JSON.stringify(saveData)); const notifyRes=await fetch(APP_CONFIG.notifyUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'push_group_message',text:buildNoticeText(entry)})}); const notifyData=await notifyRes.json(); if(!notifyData.ok) alert('LINE 通知失敗：'+JSON.stringify(notifyData)); document.getElementById('totalAmount').value=''; document.getElementById('note').value=''; document.getElementById('noticePreview').textContent='已送出：'+buildNoticeText(entry).replace(/\n/g,' / '); await loadEntries(); alert('完成 🎉'); }
-async function loadEntries(){ const res=await fetch(APP_CONFIG.apiUrl,{method:'POST',body:JSON.stringify({action:'list_entries'})}); const data=await res.json(); entries = data.ok ? (data.entries || data.data || []) : []; renderLedger(); }
-function renderLedger(){ const balance={}; USERS.forEach(u=>balance[u]=0); const active=entries.filter(e=>e&&e.status!=='void'&&e.type==='expense'); active.forEach(e=>{ (e.allocation||[]).forEach(a=>{ if(a.user!==e.payer){ balance[a.user]-=Number(a.amount||0); balance[e.payer]+=Number(a.amount||0); }})}); const ledger=document.getElementById('ledgerResult'); ledger.innerHTML=''; let has=false; Object.keys(balance).forEach(u=>{ if(balance[u]<0){ has=true; const div=document.createElement('div'); div.className='item'; div.innerHTML=`<strong>${u}</strong> 應付 ${Math.abs(balance[u])} 元`; ledger.appendChild(div);} }); if(!has) ledger.innerHTML='<div class="item">目前無欠款</div>'; const history=document.getElementById('historyList'); history.innerHTML=''; if(!active.length){ history.innerHTML='<div class="item">目前尚無紀錄</div>'; return; } active.slice().reverse().slice(-20).reverse().forEach(e=>{ const div=document.createElement('div'); div.className='item'; div.innerHTML=`<div><span class="pill">${e.payer}</span></div><div style="margin-top:8px"><strong>${e.total}</strong> 元</div><div class="muted">${e.note||'無備註'}</div>`; history.appendChild(div); }); }
-loadConfig(); loadEntries();
-</script>
+
+    <section class="page active" id="page-record">
+      <div class="card">
+        <h2 class="section-title">Accio 登錄台</h2>
+        <div class="field">
+          <label>目前巫師</label>
+          <select id="currentUser" onchange="switchCurrentUser()">
+            <option>Beth</option>
+            <option>Rainie</option>
+            <option>Ann</option>
+            <option>普忠家用</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>付款巫師</label>
+          <select id="payer" onchange="recalculate()">
+            <option>Beth</option>
+            <option>Rainie</option>
+            <option>Ann</option>
+            <option>普忠家用</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>總金額（整數）</label>
+          <input id="totalAmount" type="number" min="1" step="1" value="" oninput="recalculate()" />
+        </div>
+        <div class="field">
+          <label>註記 / 項目名稱</label>
+          <input id="note" value="" oninput="recalculate()" />
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">咒語分攤模式</h2>
+        <div class="modes">
+          <label class="mode">
+            <input type="radio" name="mode" value="split3" checked onchange="toggleMode()" />
+            <div class="mode-content">
+              <div class="mode-title">均分 3 人</div>
+              <div class="mode-desc">Beth / Rainie / Ann</div>
+              <div class="mode-badge">✓ 已選擇</div>
+            </div>
+          </label>
+          <label class="mode">
+            <input type="radio" name="mode" value="split4" onchange="toggleMode()" />
+            <div class="mode-content">
+              <div class="mode-title">均分 4 人</div>
+              <div class="mode-desc">Beth / Rainie / Ann / 普忠家用</div>
+              <div class="mode-badge">✓ 已選擇</div>
+            </div>
+          </label>
+          <label class="mode">
+            <input type="radio" name="mode" value="weight" onchange="toggleMode()" />
+            <div class="mode-content">
+              <div class="mode-title">自訂比例</div>
+              <div class="mode-desc">輸入整數權重，系統自動換算整數台幣。</div>
+              <div class="mode-badge">✓ 已選擇</div>
+            </div>
+          </label>
+          <label class="mode">
+            <input type="radio" name="mode" value="custom" onchange="toggleMode()" />
+            <div class="mode-content">
+              <div class="mode-title">自訂金額</div>
+              <div class="mode-desc">直接輸入每個人應分攤的整數金額。</div>
+              <div class="mode-badge">✓ 已選擇</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">分攤卷軸</h2>
+        <div class="split-grid" id="splitGrid"></div>
+        <div class="actions">
+          <button class="btn-sub" onclick="fillEvenly()">✨ 均分咒語</button>
+          <button class="btn-sub" onclick="clearInputs()">🧹 Nox 清空</button>
+        </div>
+        <div class="helper">台幣不保留小數；若無法整除，系統會自動把差額補到前幾位。</div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">帳冊檢核</h2>
+        <div class="summary-card">
+          <div class="summary-row"><span>總金額</span><strong id="sumTotal">0</strong></div>
+          <div class="summary-row"><span>已分配</span><strong id="sumAssigned">0</strong></div>
+          <div class="summary-row"><span>差額</span><strong id="sumDiff">0</strong></div>
+          <div class="summary-row"><span>狀態</span><strong id="sumStatus" class="good">✅ 正常</strong></div>
+        </div>
+        <div class="helper" id="validationNote">🪄 可以施展 Accio 記帳。</div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">🦉 信箋預覽</h2>
+        <div class="preview-box" id="groupNoticeBox"></div>
+        <div class="actions">
+          <button class="btn-main" onclick="submitEntry()" id="submitBtn">✨ Accio 記帳</button>
+          <button class="btn-sub" onclick="copyPreview()">📋 複製信箋</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Finite 清帳</h2>
+        <div class="field">
+          <label>清帳巫師</label>
+          <select id="checkoutFrom" onchange="renderCheckoutPreview()">
+            <option>Beth</option>
+            <option>Rainie</option>
+            <option>Ann</option>
+            <option>普忠家用</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>收款巫師</label>
+          <select id="checkoutTo" onchange="renderCheckoutPreview()">
+            <option>Beth</option>
+            <option>Rainie</option>
+            <option>Ann</option>
+            <option>普忠家用</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>清帳金額（整數）</label>
+          <input id="checkoutAmount" type="number" min="1" step="1" value="" oninput="renderCheckoutPreview()" />
+        </div>
+        <div class="field">
+          <label>清帳註記</label>
+          <input id="checkoutNote" value="已轉帳" oninput="renderCheckoutPreview()" />
+        </div>
+        <div class="preview-box" id="checkoutPreviewBox"></div>
+        <div class="actions">
+          <button class="btn-main" onclick="submitCheckout()">🪄 Finite 清帳</button>
+          <button class="btn-sub" onclick="copyCheckoutPreview()">📋 複製清帳咒語</button>
+        </div>
+      </div>
+    
+
+      <div class="card">
+        <h2 class="section-title">舊日卷宗</h2>
+        <div class="helper">全部卷宗都會顯示；不是自己建立的紀錄會反灰，避免重複登錄同一筆。</div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+</section>
+
+    <section class="page" id="page-ledger">
+      <div class="card">
+        <h2 class="section-title">Revelio 帳冊總覽</h2>
+        <div class="status-list">
+          <div class="status-card">
+            <div class="status-top">
+              <strong id="ledgerStatusText" class="good">🟢 帳務一致</strong>
+              <span class="status-pill" id="currentMonthText">本月帳冊</span>
+            </div>
+            <div class="summary-row"><span>本月總支出</span><strong id="monthExpenseTotal">0</strong></div>
+            <div class="summary-row"><span>分帳總和</span><strong id="monthSplitTotal">0</strong></div>
+            <div class="summary-row"><span>驗證結果</span><strong id="monthValidationResult" class="good">一致</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">金流顯影</h2>
+        <div class="summary-grid" id="balanceSummary"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">建議清帳</h2>
+        <div class="settlement-list" id="settlementSuggestions"></div>
+        <div class="actions">
+          <button class="btn-sub" onclick="copySettlementSummary()">📋 複製清帳建議</button>
+          <button class="btn-sub" onclick="sendSettlementToLine()">🦉 寄往 LINE 群組</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">帳冊明細表</h2>
+        <div class="table-shell" id="detailTableWrap"></div>
+        <div class="actions">
+          <button class="btn-sub" onclick="exportPDF()">📜 匯出 PDF 帳冊</button>
+          <button class="btn-sub" onclick="copyTableSummary()">📋 複製帳冊摘要</button>
+        </div>
+      </div>
+
+
+    </section>
+
+    <section class="page" id="page-settings">
+      <div class="card">
+        <h2 class="section-title">魔法設定</h2>
+        <div class="field">
+          <label>Apps Script Web App URL（主系統）</label>
+          <input id="apiUrl" value="https://script.google.com/macros/s/AKfycbw0Gq6yOyj2D0H2CTQW3lkEnxDejzDnwDCmHaEXQgMWizCQcnS1FiJ7fHq9qpqSBUOn/exec" placeholder="請貼上主系統 GAS 的 /exec" />
+        </div>
+        <div class="field">
+          <label>群組通知網址（Cloudflare Worker）</label>
+          <input id="notifyUrl" value="https://dobby-line-webhook.bace0621.workers.dev/" placeholder="請貼上 workers.dev 網址" />
+        </div>
+        <div class="field">
+          <label>Google Sheet ID</label>
+          <input id="sheetId" value="1Wi81OjI7agPzhLoAJ8kAR7Ir1_oJNXubmqvrOZ1mgwQ" placeholder="請貼上 Google Sheet ID" oninput="renderGasCode()" />
+        </div>
+        <div class="actions">
+          <button class="btn-main" onclick="saveConfig()">💾 儲存設定</button>
+          <button class="btn-sub" onclick="copyGasCode()">📋 複製主系統 GAS</button>
+        </div>
+        <div class="actions">
+          <button class="btn-sub" onclick="copyConfigLink()">🔗 複製設定連結</button>
+          <button class="btn-sub" onclick="clearConfig()">🧹 清除設定</button>
+        </div>
+        <div class="helper">其他使用者只要拿到這份 HTML 與設定連結，就能直接導入同一組設定。主系統 GAS 與 LINE Worker 分開管理最穩定。</div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">魔法帳本 GAS 程式</h2>
+        <div class="preview-box" id="gasCodeBox"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="sticky-bar">
+    <div class="sticky-inner" id="stickyInner">
+      <button id="stickyRecord" class="sticky-nav active" data-page="record" onclick="switchPage('record')">✒️ 登錄帳目</button>
+      <button id="stickyLedger" class="sticky-nav" data-page="ledger" onclick="switchPage('ledger')">📜 查閱帳冊</button>
+      <button id="stickySettings" class="sticky-nav" data-page="settings" onclick="switchPage('settings')">🪄 魔法設定</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已完成</div>
+
+  <script>
+    let CURRENT_USER = 'Beth';
+    let APP_CONFIG = {
+      apiUrl: 'https://script.google.com/macros/s/AKfycbw0Gq6yOyj2D0H2CTQW3lkEnxDejzDnwDCmHaEXQgMWizCQcnS1FiJ7fHq9qpqSBUOn/exec',
+      notifyUrl: 'https://dobby-line-webhook.bace0621.workers.dev/',
+      sheetId: '1Wi81OjI7agPzhLoAJ8kAR7Ir1_oJNXubmqvrOZ1mgwQ'
+    };
+    const APP_CONFIG_DEFAULT = Object.assign({}, APP_CONFIG);
+    const ENTRY_STORAGE_KEY = 'homeExpenseEntries';
+    let entries = [];
+    let editingEntryId = null;
+    let sequence = 1;
+
+    const PEOPLE = ['Beth', 'Rainie', 'Ann', '普忠家用'];
+
+    const USER_STORAGE_KEY = 'homeExpenseCurrentUser';
+    const FORCE_ROLE = 'admin';
+    let APP_ROLE = FORCE_ROLE || 'user';
+
+    function normalizeUserKey(value) {
+      const map = { beth: 'Beth', rainie: 'Rainie', ann: 'Ann', home: '普忠家用', family: '普忠家用', '普忠家用': '普忠家用' };
+      return map[String(value || '').trim().toLowerCase()] || map[String(value || '').trim()] || '';
+    }
+
+    function applyRoleAndUserFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const role = (params.get('role') || '').trim().toLowerCase();
+      const queryUser = normalizeUserKey(params.get('user'));
+      let storedUser = '';
+      try { storedUser = normalizeUserKey(localStorage.getItem(USER_STORAGE_KEY)); } catch (error) {}
+      if (FORCE_ROLE) APP_ROLE = FORCE_ROLE;
+      else APP_ROLE = role === 'admin' ? 'admin' : 'user';
+      CURRENT_USER = queryUser || storedUser || CURRENT_USER;
+      if (!PEOPLE.includes(CURRENT_USER)) CURRENT_USER = 'Beth';
+      try { localStorage.setItem(USER_STORAGE_KEY, CURRENT_USER); } catch (error) {}
+    }
+
+    function applyRoleUI() {
+      const currentUserEl = document.getElementById('currentUser');
+      const payerEl = document.getElementById('payer');
+      const checkoutFromEl = document.getElementById('checkoutFrom');
+      const settingsPage = document.getElementById('page-settings');
+      currentUserEl.value = CURRENT_USER;
+      if (!payerEl.value || !PEOPLE.includes(payerEl.value)) payerEl.value = CURRENT_USER;
+      if (!checkoutFromEl.value || !PEOPLE.includes(checkoutFromEl.value)) checkoutFromEl.value = CURRENT_USER;
+      if (APP_ROLE === 'admin') {
+        currentUserEl.disabled = false;
+        payerEl.disabled = false;
+        checkoutFromEl.disabled = false;
+        currentUserEl.parentElement.classList.remove('hidden');
+        settingsPage.classList.remove('hidden');
+      } else {
+        currentUserEl.disabled = true;
+        payerEl.disabled = false;
+        checkoutFromEl.disabled = false;
+        settingsPage.classList.add('hidden');
+      }
+      renderCheckoutPreview();
+      renderStickyNav();
+    }
+
+    function renderStickyNav() {
+      const stickyInner = document.getElementById('stickyInner');
+      const recordBtn = document.getElementById('stickyRecord');
+      const ledgerBtn = document.getElementById('stickyLedger');
+      const settingsBtn = document.getElementById('stickySettings');
+      const activePage = document.querySelector('.page.active')?.id?.replace('page-', '') || 'record';
+      stickyInner.classList.remove('one-button');
+      recordBtn.classList.remove('hidden');
+      ledgerBtn.classList.remove('hidden');
+      settingsBtn.classList.remove('hidden');
+      if (APP_ROLE === 'admin') {
+        recordBtn.textContent = '🧾 記帳';
+        ledgerBtn.textContent = '📊 查帳';
+        settingsBtn.textContent = '⚙️ 設定';
+        return;
+      }
+      settingsBtn.classList.add('hidden');
+      stickyInner.classList.add('one-button');
+      if (activePage === 'ledger') {
+        recordBtn.classList.remove('hidden');
+        recordBtn.textContent = '🧾 記帳';
+        ledgerBtn.classList.add('hidden');
+      } else {
+        ledgerBtn.classList.remove('hidden');
+        ledgerBtn.textContent = '📊 查帳';
+        recordBtn.classList.add('hidden');
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(function() { toast.classList.remove('show'); }, 1600);
+    }
+
+    function switchPage(page) {
+      if (APP_ROLE !== 'admin' && page === 'settings') page = 'record';
+      document.querySelectorAll('.page').forEach(function(el) {
+        el.classList.toggle('active', el.id === 'page-' + page);
+      });
+      document.querySelectorAll('.tab-btn, .sticky-nav').forEach(function(el) {
+        el.classList.toggle('active', el.dataset.page === page);
+      });
+      renderStickyNav();
+      if (page === 'ledger') {
+        renderLedgerPage();
+      }
+    }
+
+    function selectedMode() {
+      return document.querySelector('input[name="mode"]:checked').value;
+    }
+
+    function visiblePeople() {
+      return selectedMode() === 'split3' ? ['Beth', 'Rainie', 'Ann'] : PEOPLE.slice();
+    }
+
+    function roundInt(num) {
+      return Math.round(Number(num || 0));
+    }
+
+    function formatMoney(num) {
+      return String(roundInt(num));
+    }
+
+    function nowText() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      return y + '/' + m + '/' + d + ' ' + hh + ':' + mm;
+    }
+
+
+    function saveEntriesToLocal() {
+      try {
+        localStorage.setItem(ENTRY_STORAGE_KEY, JSON.stringify(entries));
+      } catch (error) {
+        console.error('local save failed', error);
+      }
+    }
+
+    function loadEntriesFromLocal() {
+      try {
+        const raw = localStorage.getItem(ENTRY_STORAGE_KEY);
+        entries = raw ? JSON.parse(raw) : [];
+      } catch (error) {
+        console.error('local load failed', error);
+        entries = [];
+      }
+      if (!Array.isArray(entries)) entries = [];
+      updateSequence();
+    }
+
+    function useServerEntries(serverEntries) {
+      if (!Array.isArray(serverEntries)) return;
+      entries = serverEntries.slice().sort(function(a, b) {
+        return String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+      });
+      updateSequence();
+      saveEntriesToLocal();
+      renderHistory();
+      renderLedgerPage();
+    }
+
+    function getApiUrl() {
+      return (document.getElementById('apiUrl').value || APP_CONFIG.apiUrl || '').trim();
+    }
+
+    function getNotifyUrl() {
+      return (document.getElementById('notifyUrl').value || APP_CONFIG.notifyUrl || '').trim();
+    }
+
+    function showServerError(title, result) {
+      const parts = [title];
+      if (result && result.message) parts.push(result.message);
+      if (result && result.raw) parts.push('原始回應：' + result.raw);
+      alert(parts.join('\n'));
+    }
+
+    function loadConfig() {
+      try {
+        const raw = localStorage.getItem('homeExpenseAppConfig');
+        if (raw) {
+          const stored = JSON.parse(raw);
+          APP_CONFIG = Object.assign({}, APP_CONFIG_DEFAULT, stored || {});
+          if (!APP_CONFIG.apiUrl) APP_CONFIG.apiUrl = APP_CONFIG_DEFAULT.apiUrl;
+          if (!APP_CONFIG.notifyUrl) APP_CONFIG.notifyUrl = APP_CONFIG_DEFAULT.notifyUrl;
+          if (!APP_CONFIG.sheetId) APP_CONFIG.sheetId = APP_CONFIG_DEFAULT.sheetId;
+        } else {
+          APP_CONFIG = Object.assign({}, APP_CONFIG_DEFAULT);
+        }
+      } catch (error) {
+        console.error(error);
+        APP_CONFIG = Object.assign({}, APP_CONFIG_DEFAULT);
+      }
+      syncConfigToInputs();
+    }
+
+    function syncConfigToInputs() {
+      document.getElementById('apiUrl').value = APP_CONFIG.apiUrl || '';
+      document.getElementById('notifyUrl').value = APP_CONFIG.notifyUrl || '';
+      document.getElementById('sheetId').value = APP_CONFIG.sheetId || '';
+    }
+
+    function applyUrlConfigFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const apiUrl = (params.get('apiUrl') || '').trim();
+      const notifyUrl = (params.get('notifyUrl') || '').trim();
+      const sheetId = (params.get('sheetId') || '').trim();
+      let changed = false;
+      if (apiUrl) { APP_CONFIG.apiUrl = apiUrl; changed = true; }
+      if (notifyUrl) { APP_CONFIG.notifyUrl = notifyUrl; changed = true; }
+      if (sheetId) { APP_CONFIG.sheetId = sheetId; changed = true; }
+      if (changed) localStorage.setItem('homeExpenseAppConfig', JSON.stringify(APP_CONFIG));
+      syncConfigToInputs();
+    }
+
+    function saveConfig() {
+      APP_CONFIG.apiUrl = (document.getElementById('apiUrl').value || '').trim();
+      APP_CONFIG.notifyUrl = (document.getElementById('notifyUrl').value || '').trim();
+      APP_CONFIG.sheetId = (document.getElementById('sheetId').value || '').trim();
+      localStorage.setItem('homeExpenseAppConfig', JSON.stringify(APP_CONFIG));
+      renderGasCode();
+      showToast('已儲存設定');
+    }
+
+    function clearConfig() {
+      APP_CONFIG = Object.assign({}, APP_CONFIG_DEFAULT);
+      localStorage.removeItem('homeExpenseAppConfig');
+      syncConfigToInputs();
+      renderGasCode();
+      showToast('已清除設定');
+    }
+
+    function copyConfigLink() {
+      const params = new URLSearchParams();
+      const apiUrl = (document.getElementById('apiUrl').value || '').trim();
+      const notifyUrl = (document.getElementById('notifyUrl').value || '').trim();
+      const sheetId = (document.getElementById('sheetId').value || '').trim();
+      if (apiUrl) params.set('apiUrl', apiUrl);
+      if (notifyUrl) params.set('notifyUrl', notifyUrl);
+      if (sheetId) params.set('sheetId', sheetId);
+      const base = window.location.href.split('?')[0];
+      copyText(base + (params.toString() ? '?' + params.toString() : ''), '已複製設定連結');
+    }
+
+    function getGasCode() {
+      const sheetId = (document.getElementById('sheetId').value || APP_CONFIG.sheetId || '請填入你的 Spreadsheet ID').trim();
+      return [
+        'const SPREADSHEET_ID = "' + sheetId + '";',
+        'const ENTRY_SHEET = "分帳紀錄";',
+        'const AUDIT_SHEET = "操作紀錄";',
+        '',
+        'function doPost(e) {',
+        '  try {',
+        '    const payload = JSON.parse(e.postData.contents || "{}");',
+        '    const action = payload.action;',
+        '    if (!action) return jsonOutput({ ok: false, message: "missing action" });',
+        '    if (action === "upsert_entry") return upsertEntry(payload);',
+        '    if (action === "void_entry") return voidEntry(payload);',
+        '    if (action === "list_entries") return listEntries();',
+        '    if (action === "notify") return notifyOnly(payload);',
+        '    return jsonOutput({ ok: false, message: "unknown action" });',
+        '  } catch (error) {',
+        '    return jsonOutput({ ok: false, message: error.message, stack: String(error.stack || "") });',
+        '  }',
+        '}',
+        '',
+        'function doGet() {',
+        '  return jsonOutput({ ok: true, message: "home expense api ready" });',
+        '}',
+        '',
+        'function getSheet(name) {',
+        '  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);',
+        '  let sheet = ss.getSheetByName(name);',
+        '  if (!sheet) sheet = ss.insertSheet(name);',
+        '  return sheet;',
+        '}',
+        '',
+        'function ensureHeaders() {',
+        '  const entrySheet = getSheet(ENTRY_SHEET);',
+        '  const auditSheet = getSheet(AUDIT_SHEET);',
+        '  if (entrySheet.getLastRow() === 0) {',
+        '    entrySheet.appendRow(["id","type","status","createdBy","createdAt","updatedAt","payer","total","note","mode","from","to","amount","payload_json"]);',
+        '  }',
+        '  if (auditSheet.getLastRow() === 0) {',
+        '    auditSheet.appendRow(["event_time","action","entry_id","operator","payload_json"]);',
+        '  }',
+        '}',
+        '',
+        'function upsertEntry(payload) {',
+        '  ensureHeaders();',
+        '  const sheet = getSheet(ENTRY_SHEET);',
+        '  const values = sheet.getDataRange().getValues();',
+        '  const entry = payload.entry || {};',
+        '  const row = [entry.id || "", entry.type || "", entry.status || "active", entry.createdBy || "", entry.createdAt || "", entry.updatedAt || "", entry.payer || "", entry.total || "", entry.note || "", entry.mode || "", entry.from || "", entry.to || "", entry.amount || "", JSON.stringify(entry)];',
+        '  let foundRow = -1;',
+        '  for (let i = 1; i < values.length; i++) {',
+        '    if (String(values[i][0]) === String(entry.id)) { foundRow = i + 1; break; }',
+        '  }',
+        '  if (foundRow > 0) sheet.getRange(foundRow, 1, 1, row.length).setValues([row]);',
+        '  else sheet.appendRow(row);',
+        '  writeAudit("upsert_entry", entry.id, entry.createdBy || "", entry);',
+        '  return jsonOutput({ ok: true, entry: entry });',
+        '}',
+        '',
+        'function voidEntry(payload) {',
+        '  ensureHeaders();',
+        '  const sheet = getSheet(ENTRY_SHEET);',
+        '  const values = sheet.getDataRange().getValues();',
+        '  const entryId = payload.entryId;',
+        '  const operator = payload.operator || "";',
+        '  for (let i = 1; i < values.length; i++) {',
+        '    if (String(values[i][0]) === String(entryId)) {',
+        '      values[i][2] = "void";',
+        '      values[i][5] = payload.updatedAt || new Date().toISOString();',
+        '      const obj = JSON.parse(values[i][13] || "{}");',
+        '      obj.status = "void";',
+        '      obj.updatedAt = values[i][5];',
+        '      values[i][13] = JSON.stringify(obj);',
+        '      sheet.getRange(i + 1, 1, 1, values[i].length).setValues([values[i]]);',
+        '      writeAudit("void_entry", entryId, operator, obj);',
+        '      return jsonOutput({ ok: true, entryId: entryId });',
+        '    }',
+        '  }',
+        '  return jsonOutput({ ok: false, message: "entry not found" });',
+        '}',
+        '',
+        'function listEntries() {',
+        '  ensureHeaders();',
+        '  const sheet = getSheet(ENTRY_SHEET);',
+        '  const values = sheet.getDataRange().getValues();',
+        '  const rows = values.slice(1).map(function(row) {',
+        '    try { return JSON.parse(row[13] || "{}"); } catch (e) { return null; }',
+        '  }).filter(Boolean);',
+        '  return jsonOutput({ ok: true, entries: rows });',
+        '}',
+        '',
+        'function notifyOnly(payload) {',
+        '  writeAudit("notify", payload.entryId || "", payload.operator || "", payload);',
+        '  return jsonOutput({ ok: true });',
+        '}',
+        '',
+        'function writeAudit(action, entryId, operator, payload) {',
+        '  const sheet = getSheet(AUDIT_SHEET);',
+        '  sheet.appendRow([new Date().toISOString(), action, entryId, operator, JSON.stringify(payload)]);',
+        '}',
+        '',
+        'function jsonOutput(obj) {',
+        '  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);',
+        '}'
+      ].join('\n');
+    }
+
+    function renderGasCode() {
+      document.getElementById('gasCodeBox').textContent = getGasCode();
+    }
+
+    async function copyText(text, okMsg) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(okMsg);
+      } catch (error) {
+        showToast('複製失敗，請手動複製');
+      }
+    }
+
+    function copyGasCode() {
+      copyText(getGasCode(), '已複製 GAS 程式');
+    }
+
+    function distributeEvenly(total, names) {
+      const intTotal = roundInt(total);
+      const base = Math.floor(intTotal / names.length);
+      let remainder = intTotal % names.length;
+      return names.map(function(name) {
+        const amount = base + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder -= 1;
+        return { name: name, amount: amount };
+      });
+    }
+
+    function distributeByWeight(total, weights) {
+      const intTotal = roundInt(total);
+      const positiveWeights = weights.map(function(item) {
+        return { name: item.name, weight: Math.max(0, roundInt(item.weight)) };
+      });
+      const totalWeight = positiveWeights.reduce(function(sum, item) { return sum + item.weight; }, 0);
+      if (totalWeight <= 0) {
+        return positiveWeights.map(function(item) { return { name: item.name, amount: 0 }; });
+      }
+      let assigned = 0;
+      const raw = positiveWeights.map(function(item, index) {
+        if (index === positiveWeights.length - 1) {
+          return { name: item.name, amount: intTotal - assigned };
+        }
+        const amount = Math.floor(intTotal * item.weight / totalWeight);
+        assigned += amount;
+        return { name: item.name, amount: amount };
+      });
+      let diff = intTotal - raw.reduce(function(sum, item) { return sum + item.amount; }, 0);
+      let i = 0;
+      while (diff > 0 && raw.length) {
+        raw[i % raw.length].amount += 1;
+        diff -= 1;
+        i += 1;
+      }
+      return raw;
+    }
+
+    function refreshModeSelectionUI() {
+      document.querySelectorAll('.mode').forEach(function(label) {
+        const radio = label.querySelector('input[type="radio"]');
+        label.classList.toggle('active', !!(radio && radio.checked));
+      });
+    }
+
+    function normalizeSplitField(input, forceZero) {
+      if (!input || input.disabled) return;
+      const raw = String(input.value || '').trim();
+      if (raw === '') {
+        if (forceZero) input.value = '0';
+        return;
+      }
+      input.value = String(roundInt(raw));
+    }
+
+    function normalizeEmptySplitFields(forceZero) {
+      visiblePeople().forEach(function(name) {
+        normalizeSplitField(document.getElementById('val_' + name), forceZero);
+      });
+    }
+
+    function buildDetailFields() {
+      const grid = document.getElementById('splitGrid');
+      const mode = selectedMode();
+      const names = visiblePeople();
+      grid.innerHTML = '';
+      names.forEach(function(name) {
+        const row = document.createElement('div');
+        row.className = 'split-row';
+        const chip = document.createElement('div');
+        chip.className = 'name-chip';
+        chip.textContent = name;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.step = '1';
+        input.min = '0';
+        input.id = 'val_' + name;
+        input.oninput = recalculate;
+        input.onblur = function() {
+          normalizeSplitField(input, true);
+          recalculate();
+        };
+        if (mode === 'split3' || mode === 'split4') input.disabled = true;
+        if (mode === 'weight') input.placeholder = '權重';
+        if (mode === 'custom') input.placeholder = '金額';
+        row.appendChild(chip);
+        row.appendChild(input);
+        grid.appendChild(row);
+      });
+      if (mode === 'split3' || mode === 'split4') {
+        fillEvenly();
+      } else if (mode === 'weight') {
+        names.forEach(function(name) {
+          const el = document.getElementById('val_' + name);
+          if (!el) return;
+          if (name === 'Beth') el.value = 1;
+          else if (name === '普忠家用') el.value = 1;
+          else el.value = 2;
+        });
+      }
+    }
+
+    function toggleMode() {
+      refreshModeSelectionUI();
+      buildDetailFields();
+      recalculate();
+    }
+
+    function fillEvenly() {
+      distributeEvenly(Number(document.getElementById('totalAmount').value || 0), visiblePeople()).forEach(function(item) {
+        const el = document.getElementById('val_' + item.name);
+        if (el) el.value = String(item.amount);
+      });
+      recalculate();
+    }
+
+    function clearInputs() {
+      visiblePeople().forEach(function(name) {
+        const el = document.getElementById('val_' + name);
+        if (!el) return;
+        el.value = '0';
+      });
+      recalculate();
+    }
+
+    function getAllocation() {
+      const mode = selectedMode();
+      const names = visiblePeople();
+      const total = Number(document.getElementById('totalAmount').value || 0);
+      if (mode === 'split3' || mode === 'split4') return distributeEvenly(total, names);
+      if (mode === 'custom') {
+        return names.map(function(name) {
+          return { name: name, amount: roundInt((document.getElementById('val_' + name) || {}).value || 0) };
+        });
+      }
+      if (mode === 'weight') {
+        return distributeByWeight(total, names.map(function(name) {
+          return { name: name, weight: roundInt((document.getElementById('val_' + name) || {}).value || 0) };
+        }));
+      }
+      return [];
+    }
+
+    function validateForm() {
+      const total = roundInt(document.getElementById('totalAmount').value || 0);
+      const mode = selectedMode();
+      const names = visiblePeople();
+      if (!total || total <= 0) return { ok: false, message: '請輸入大於 0 的整數金額。' };
+      if (mode === 'weight') {
+        const weights = names.map(function(name) {
+          return roundInt((document.getElementById('val_' + name) || {}).value || 0);
+        });
+        if (weights.every(function(v) { return v <= 0; })) return { ok: false, message: '自訂比例模式下，至少需有一位權重大於 0。' };
+      }
+      return { ok: true, message: '🪄 可以施展 Accio 記帳。' };
+    }
+
+    function validateCheckout() {
+      const from = document.getElementById('checkoutFrom').value;
+      const to = document.getElementById('checkoutTo').value;
+      const amount = roundInt(document.getElementById('checkoutAmount').value || 0);
+      if (from === to) return { ok: false, message: '清帳巫師與收款巫師不可相同。' };
+      if (!amount || amount <= 0) return { ok: false, message: '請輸入大於 0 的整數金額。' };
+      return { ok: true, message: '🪄 可以施展 Finite 清帳。' };
+    }
+
+    function buildSettlement(allocation, payer) {
+      return allocation.filter(function(item) { return item.name !== payer && item.amount > 0; })
+        .map(function(item) { return { from: item.name, to: payer, amount: item.amount }; });
+    }
+
+    function getModeLabel(mode) {
+      return ({ split3: '均分 3 人', split4: '均分 4 人', weight: '自訂比例', custom: '自訂金額' })[mode] || mode;
+    }
+
+    function getPreviewText() {
+      const payer = document.getElementById('payer').value;
+      const total = roundInt(document.getElementById('totalAmount').value || 0);
+      const note = document.getElementById('note').value.trim();
+      const allocation = getAllocation();
+      const settlements = buildSettlement(allocation, payer);
+      let text = '付款巫師：' + payer + '\n總金額：$' + formatMoney(total) + '\n模式：' + getModeLabel(selectedMode()) + '\n';
+      if (note) text += '註記：' + note + '\n';
+      text += '\n分配明細：\n';
+      allocation.forEach(function(item) {
+        text += '・' + item.name + '：$' + formatMoney(item.amount) + '\n';
+      });
+      text += '\n誰付誰：\n';
+      if (settlements.length) {
+        settlements.forEach(function(item) {
+          text += '・' + item.from + ' ➜ ' + item.to + '：$' + formatMoney(item.amount) + '\n';
+        });
+      } else {
+        text += '・目前沒有其他人需要付款\n';
+      }
+      return text;
+    }
+
+    function buildPrettyLineMessage(entry) {
+      if (entry.type === 'checkout') {
+        return [
+          '✨【多比清帳通知】',
+          '',
+          '👤 清帳巫師：' + entry.from,
+          '🏦 收款巫師：' + entry.to,
+          '💰 金額：$' + formatMoney(entry.amount),
+          '📝 備註：' + (entry.note || '無'),
+          '',
+          '🪄 帳本已同步更新'
+        ].join('\n');
+      }
+      const lines = [
+        '✨【多比分帳通知】',
+        '',
+        '👤 付款巫師：' + entry.payer,
+        '💰 總金額：$' + formatMoney(entry.total),
+        '📝 備註：' + (entry.note || '無'),
+        '',
+        '🧾 分帳明細：'
+      ];
+      entry.allocation.forEach(function(item) {
+        lines.push('・' + item.name + '：$' + formatMoney(item.amount));
+      });
+      lines.push('');
+      if (entry.settlements && entry.settlements.length) {
+        lines.push('📊 金流顯影：');
+        entry.settlements.forEach(function(item) {
+          lines.push('・' + item.from + ' ➜ ' + item.to + '：$' + formatMoney(item.amount));
+        });
+      } else {
+        lines.push('📊 目前無需其他人付款');
+      }
+      lines.push('');
+      lines.push('🪄 帳本已同步更新');
+      return lines.join('\n');
+    }
+
+    function renderGroupNotice() {
+      const mockEntry = {
+        type: 'expense',
+        payer: document.getElementById('payer').value,
+        total: roundInt(document.getElementById('totalAmount').value || 0),
+        note: document.getElementById('note').value.trim(),
+        allocation: getAllocation(),
+        settlements: buildSettlement(getAllocation(), document.getElementById('payer').value)
+      };
+      document.getElementById('groupNoticeBox').textContent = buildPrettyLineMessage(mockEntry);
+    }
+
+    function recalculate() {
+      const total = roundInt(document.getElementById('totalAmount').value || 0);
+      let allocation = getAllocation();
+      let assigned = roundInt(allocation.reduce(function(sum, item) { return sum + item.amount; }, 0));
+      let diff = total - assigned;
+      if (diff === 0) {
+        normalizeEmptySplitFields(true);
+        allocation = getAllocation();
+        assigned = roundInt(allocation.reduce(function(sum, item) { return sum + item.amount; }, 0));
+        diff = total - assigned;
+      }
+      const check = validateForm();
+      const ok = check.ok && diff === 0;
+      document.getElementById('sumTotal').textContent = formatMoney(total);
+      document.getElementById('sumAssigned').textContent = formatMoney(assigned);
+      document.getElementById('sumDiff').textContent = formatMoney(diff);
+      const status = document.getElementById('sumStatus');
+      status.textContent = ok ? '✅ 正常' : '❌ 需修正';
+      status.className = ok ? 'good' : 'warn';
+      document.getElementById('validationNote').textContent = ok ? '🪄 可以施展 Accio 記帳。' : (check.ok ? '分配總和與總額不一致。' : check.message);
+      renderGroupNotice();
+      updateSubmitButtonState();
+    }
+
+    function updateSubmitButtonState() {
+      const check = validateForm();
+      const total = roundInt(document.getElementById('totalAmount').value || 0);
+      const assigned = roundInt(getAllocation().reduce(function(sum, item) { return sum + item.amount; }, 0));
+      const disabled = !check.ok || total !== assigned;
+      ['submitBtn'].forEach(function(id) {
+        const btn = document.getElementById(id);
+        btn.disabled = disabled;
+        btn.style.opacity = disabled ? 0.55 : 1;
+      });
+    }
+
+    function switchCurrentUser() {
+      CURRENT_USER = document.getElementById('currentUser').value;
+      try { localStorage.setItem(USER_STORAGE_KEY, CURRENT_USER); } catch (error) {}
+      document.getElementById('payer').value = CURRENT_USER;
+      document.getElementById('checkoutFrom').value = CURRENT_USER;
+      renderCheckoutPreview();
+      renderHistory();
+      showToast('目前巫師：' + CURRENT_USER);
+    }
+
+        async function callApi(action, payload) {
+      const apiUrl = getApiUrl();
+      if (!apiUrl) return { ok: false, message: '尚未設定主系統 GAS URL' };
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(Object.assign({ action: action }, payload || {}))
+        });
+
+        const rawText = await response.text();
+        console.log('callApi raw response =', rawText);
+
+        let data = null;
+        try {
+          data = rawText ? JSON.parse(rawText) : {};
+        } catch (parseError) {
+          return {
+            ok: false,
+            message: 'GAS 沒有回傳合法 JSON',
+            raw: rawText,
+            status: response.status
+          };
+        }
+
+        if (!response.ok) {
+          return Object.assign({}, data || {}, {
+            ok: false,
+            message: (data && data.message) || ('HTTP ' + response.status),
+            raw: rawText,
+            status: response.status
+          });
+        }
+
+        return data || { ok: true };
+      } catch (error) {
+        return { ok: false, message: error.message || 'API 呼叫失敗' };
+      }
+    }
+
+        async function sendExternalNotify(text, entryId) {
+      const notifyUrl = getNotifyUrl();
+      if (!notifyUrl) return { ok: false, message: '尚未設定 LINE 通知網址' };
+      try {
+        const response = await fetch(notifyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'push_group_message',
+            text: text,
+            entryId: entryId
+          })
+        });
+        const rawText = await response.text();
+        let data = null;
+        try {
+          data = rawText ? JSON.parse(rawText) : {};
+        } catch (parseError) {
+          return { ok: false, message: 'LINE 通知端回傳格式錯誤', raw: rawText, status: response.status };
+        }
+        if (!response.ok) {
+          return Object.assign({}, data || {}, {
+            ok: false,
+            message: (data && data.message) || ('HTTP ' + response.status),
+            raw: rawText,
+            status: response.status
+          });
+        }
+        return data || { ok: true };
+      } catch (error) {
+        return { ok: false, message: error.message || 'notify failed' };
+      }
+    }
+
+        async function syncEntriesFromServer() {
+      const apiUrl = getApiUrl();
+      if (!apiUrl) {
+        renderHistory();
+        renderLedgerPage();
+        return { ok: true, skipped: true };
+      }
+      const result = await callApi('list_entries', {});
+      if (result && result.ok && Array.isArray(result.entries)) {
+        useServerEntries(result.entries);
+        return result;
+      }
+      console.warn('syncEntriesFromServer failed', result);
+      return result || { ok: false, message: '同步失敗' };
+    }
+
+    function updateSequence() {
+      let maxId = 0;
+      entries.forEach(function(entry) {
+        const numeric = Number(String(entry.id || '').replace(/[^0-9]/g, ''));
+        if (numeric > maxId) maxId = numeric;
+      });
+      sequence = Math.max(sequence, maxId + 1);
+    }
+
+    function resetFormAfterSubmit() {
+      editingEntryId = null;
+      document.getElementById('payer').value = CURRENT_USER;
+      document.getElementById('checkoutFrom').value = CURRENT_USER;
+      document.getElementById('totalAmount').value = '';
+      document.getElementById('checkoutAmount').value = '';
+      document.getElementById('checkoutNote').value = '已轉帳';
+      document.getElementById('note').value = '';
+      document.querySelector('input[name="mode"][value="split3"]').checked = true;
+      refreshModeSelectionUI();
+      buildDetailFields();
+      recalculate();
+      renderCheckoutPreview();
+    }
+
+        async function submitEntry() {
+      const check = validateForm();
+      const total = roundInt(document.getElementById('totalAmount').value || 0);
+      const allocation = getAllocation();
+      const assigned = roundInt(allocation.reduce(function(sum, item) { return sum + item.amount; }, 0));
+      if (!check.ok) return alert(check.message);
+      if (total !== assigned) return alert('分配總和與總額不一致。');
+
+      const now = nowText();
+      const isEditing = !!editingEntryId;
+      const entry = {
+        id: editingEntryId || ('E' + sequence++),
+        type: 'expense',
+        createdBy: CURRENT_USER,
+        currentUser: CURRENT_USER,
+        createdAt: now,
+        updatedAt: now,
+        payer: document.getElementById('payer').value,
+        total: total,
+        note: document.getElementById('note').value.trim(),
+        mode: selectedMode(),
+        allocation: allocation,
+        settlements: buildSettlement(allocation, document.getElementById('payer').value),
+        lineMessage: '',
+        status: 'active'
+      };
+      entry.lineMessage = buildPrettyLineMessage(entry);
+
+      if (isEditing) {
+        const idx = entries.findIndex(function(x) { return x.id === editingEntryId; });
+        if (idx < 0 || entries[idx].createdBy !== CURRENT_USER) return alert('只能修改自己填寫的紀錄。');
+        entry.createdAt = entries[idx].createdAt;
+        entries[idx] = Object.assign({}, entries[idx], entry, { updatedAt: nowText() });
+      } else {
+        entries.unshift(entry);
+      }
+
+      updateSequence();
+      saveEntriesToLocal();
+      renderHistory();
+      renderLedgerPage();
+
+      const saveResult = await callApi('upsert_entry', { entry: entry });
+      console.log('submitEntry saveResult =', saveResult);
+
+      if (!saveResult || !saveResult.ok) {
+        showServerError('雲端寫入失敗', saveResult);
+        showToast('本地已更新，但雲端寫入失敗');
+        return;
+      }
+
+      if (saveResult.entry) {
+        const idx = entries.findIndex(function(x) { return x.id === saveResult.entry.id; });
+        if (idx >= 0) entries[idx] = Object.assign({}, entries[idx], saveResult.entry);
+        saveEntriesToLocal();
+        renderHistory();
+        renderLedgerPage();
+      }
+
+      const notifyResult = await sendExternalNotify(entry.lineMessage, entry.id);
+      console.log('submitEntry notifyResult =', notifyResult);
+
+      if (notifyResult && notifyResult.ok === false) {
+        showServerError('LINE 通知失敗', notifyResult);
+        showToast('已入帳，但 LINE 通知失敗');
+      } else {
+        showToast(isEditing ? '已修改並同步 LINE' : '新增成功，已通知群組');
+      }
+
+      resetFormAfterSubmit();
+      await syncEntriesFromServer();
+    }
+
+    function getCheckoutPreviewText() {
+      return [
+        '清帳巫師：' + document.getElementById('checkoutFrom').value,
+        '收款巫師：' + document.getElementById('checkoutTo').value,
+        '清帳金額：$' + formatMoney(document.getElementById('checkoutAmount').value || 0),
+        '註記：' + ((document.getElementById('checkoutNote').value || '').trim() || '無')
+      ].join('\n');
+    }
+
+    function renderCheckoutPreview() {
+      document.getElementById('checkoutPreviewBox').textContent = getCheckoutPreviewText();
+    }
+
+        async function submitCheckout() {
+      const check = validateCheckout();
+      if (!check.ok) return alert(check.message);
+
+      const entry = {
+        id: 'C' + sequence++,
+        type: 'checkout',
+        createdBy: CURRENT_USER,
+        currentUser: CURRENT_USER,
+        createdAt: nowText(),
+        updatedAt: nowText(),
+        from: document.getElementById('checkoutFrom').value,
+        to: document.getElementById('checkoutTo').value,
+        amount: roundInt(document.getElementById('checkoutAmount').value || 0),
+        note: document.getElementById('checkoutNote').value.trim(),
+        lineMessage: '',
+        status: 'active'
+      };
+      entry.lineMessage = buildPrettyLineMessage(entry);
+
+      entries.unshift(entry);
+      updateSequence();
+      saveEntriesToLocal();
+      renderHistory();
+      renderLedgerPage();
+
+      const saveResult = await callApi('upsert_entry', { entry: entry });
+      console.log('submitCheckout saveResult =', saveResult);
+
+      if (!saveResult || !saveResult.ok) {
+        showServerError('清帳雲端寫入失敗', saveResult);
+        showToast('本地已清帳，但雲端寫入失敗');
+        return;
+      }
+
+      if (saveResult.entry) {
+        const idx = entries.findIndex(function(x) { return x.id === saveResult.entry.id; });
+        if (idx >= 0) entries[idx] = Object.assign({}, entries[idx], saveResult.entry);
+        saveEntriesToLocal();
+        renderHistory();
+        renderLedgerPage();
+      }
+
+      const notifyResult = await sendExternalNotify(entry.lineMessage, entry.id);
+      console.log('submitCheckout notifyResult =', notifyResult);
+
+      if (notifyResult && notifyResult.ok === false) {
+        showServerError('LINE 通知失敗', notifyResult);
+        showToast('清帳已入帳，但 LINE 通知失敗');
+      } else {
+        showToast('清帳成功，已通知群組');
+      }
+
+      document.getElementById('checkoutAmount').value = '';
+      document.getElementById('checkoutNote').value = '已轉帳';
+      renderCheckoutPreview();
+      await syncEntriesFromServer();
+    }
+
+    function copyPreview() {
+      copyText(document.getElementById('groupNoticeBox').textContent, '已複製通知文字');
+    }
+
+    function copyCheckoutPreview() {
+      copyText(getCheckoutPreviewText(), '已複製清帳文字');
+    }
+
+    function editEntry(id) {
+      const entry = entries.find(function(x) { return x.id === id; });
+      if (!entry) return;
+      if (entry.createdBy !== CURRENT_USER) return alert('只能修改自己填寫的紀錄。');
+      if (entry.type !== 'expense') return alert('清帳紀錄請改以作廢重建。');
+      editingEntryId = entry.id;
+      switchPage('record');
+      document.getElementById('payer').value = entry.payer;
+      document.getElementById('totalAmount').value = String(roundInt(entry.total));
+      document.getElementById('note').value = entry.note || '';
+      document.querySelector('input[name="mode"][value="' + entry.mode + '"]').checked = true;
+      refreshModeSelectionUI();
+      buildDetailFields();
+      entry.allocation.forEach(function(item) {
+        const el = document.getElementById('val_' + item.name);
+        if (el) el.value = String(roundInt(item.amount));
+      });
+      recalculate();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast('已載入可修改的紀錄');
+    }
+
+        async function voidEntry(id) {
+      const entry = entries.find(function(x) { return x.id === id; });
+      if (!entry) return;
+      if (entry.createdBy !== CURRENT_USER) return alert('只能作廢自己填寫的紀錄。');
+
+      entry.status = 'void';
+      entry.updatedAt = nowText();
+      saveEntriesToLocal();
+      renderHistory();
+      renderLedgerPage();
+
+      const result = await callApi('void_entry', { entryId: id, operator: CURRENT_USER, updatedAt: entry.updatedAt });
+      console.log('voidEntry result =', result);
+
+      if (!result || !result.ok) {
+        showServerError('雲端作廢失敗', result);
+        showToast('本地已作廢，但雲端更新失敗');
+        return;
+      }
+
+      await sendExternalNotify('⚠️【作廢通知】\n' + CURRENT_USER + ' 作廢了紀錄 ' + id, id);
+      showToast('已作廢你的紀錄');
+      await syncEntriesFromServer();
+    }
+
+    function copyHistoryNotice(id) {
+      const entry = entries.find(function(x) { return x.id === id; });
+      if (entry) copyText(buildPrettyLineMessage(entry), '已複製紀錄通知');
+    }
+
+    function renderHistory() {
+      const box = document.getElementById('historyList');
+      box.innerHTML = '';
+      if (!entries.length) {
+        box.innerHTML = '<div class="history-card">目前尚無卷宗。</div>';
+        return;
+      }
+      entries.forEach(function(entry) {
+        const canEdit = entry.createdBy === CURRENT_USER;
+        const div = document.createElement('div');
+        div.className = 'history-card' + (canEdit ? '' : ' dimmed');
+        const isVoid = entry.status === 'void';
+        const title = entry.type === 'expense' ? (entry.note || '未命名項目') : '手動清帳';
+        const meta = entry.type === 'expense'
+          ? '付款巫師：' + entry.payer + '｜總額：$' + formatMoney(entry.total)
+          : '清帳：' + entry.from + ' ➜ ' + entry.to + '｜金額：$' + formatMoney(entry.amount);
+        let details = '';
+        if (entry.type === 'expense') {
+          details = entry.allocation.map(function(item) {
+            return item.name + ' $' + formatMoney(item.amount);
+          }).join(' ／ ');
+        } else {
+          details = '註記：' + (entry.note || '無');
+        }
+        div.innerHTML = '' +
+          '<div class="history-top">' +
+            '<div>' +
+              '<div class="history-title">' + (isVoid ? '❌ ' : '') + title + '</div>' +
+              '<div class="history-meta">' + meta + '<br>建立者：' + entry.createdBy + (canEdit ? '｜可修改' : '｜僅供查看') + '｜時間：' + entry.updatedAt + '</div>' +
+            '</div>' +
+            '<div class="tag-row">' +
+              '<span class="tag">' + (entry.type === 'expense' ? '記帳' : '清帳') + '</span>' +
+              '<span class="tag ' + (isVoid ? 'invalid' : '') + '">' + (isVoid ? '已作廢' : '有效') + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="history-meta">' + details + '</div>' +
+          '<div class="history-actions">' +
+            '<button class="mini-btn" onclick="copyHistoryNotice(\'' + entry.id + '\')">複製</button>' +
+            '<button class="mini-btn" onclick="editEntry(\'' + entry.id + '\')" ' + ((!canEdit || isVoid || entry.type !== 'expense') ? 'disabled' : '') + '>修改</button>' +
+            '<button class="mini-btn" onclick="voidEntry(\'' + entry.id + '\')" ' + ((!canEdit || isVoid) ? 'disabled' : '') + '>作廢</button>' +
+          '</div>';
+        box.appendChild(div);
+      });
+    }
+
+    function computeBalances() {
+      const balances = {};
+      PEOPLE.forEach(function(name) { balances[name] = 0; });
+      entries.filter(function(x) { return x.status === 'active'; }).forEach(function(entry) {
+        if (entry.type === 'expense') {
+          entry.settlements.forEach(function(s) {
+            balances[s.from] -= roundInt(s.amount);
+            balances[s.to] += roundInt(s.amount);
+          });
+        } else if (entry.type === 'checkout') {
+          balances[entry.from] += roundInt(entry.amount);
+          balances[entry.to] -= roundInt(entry.amount);
+        }
+      });
+      return balances;
+    }
+
+    function computeSettlementSuggestions(balances) {
+      const creditors = [];
+      const debtors = [];
+      Object.keys(balances).forEach(function(name) {
+        const amount = roundInt(balances[name]);
+        if (amount > 0) creditors.push({ name: name, amount: amount });
+        if (amount < 0) debtors.push({ name: name, amount: Math.abs(amount) });
+      });
+      const suggestions = [];
+      let i = 0;
+      let j = 0;
+      while (i < debtors.length && j < creditors.length) {
+        const pay = Math.min(debtors[i].amount, creditors[j].amount);
+        suggestions.push({ from: debtors[i].name, to: creditors[j].name, amount: pay });
+        debtors[i].amount -= pay;
+        creditors[j].amount -= pay;
+        if (debtors[i].amount === 0) i += 1;
+        if (creditors[j].amount === 0) j += 1;
+      }
+      return suggestions;
+    }
+
+    function renderLedgerPage() {
+      const activeEntries = entries.filter(function(entry) { return entry.status === 'active'; });
+      const monthTotal = activeEntries.filter(function(entry) { return entry.type === 'expense'; }).reduce(function(sum, entry) {
+        return sum + roundInt(entry.total);
+      }, 0);
+      const splitTotal = activeEntries.filter(function(entry) { return entry.type === 'expense'; }).reduce(function(sum, entry) {
+        return sum + entry.allocation.reduce(function(sub, item) { return sub + roundInt(item.amount); }, 0);
+      }, 0);
+      const balanced = monthTotal === splitTotal;
+      document.getElementById('monthExpenseTotal').textContent = '$' + formatMoney(monthTotal);
+      document.getElementById('monthSplitTotal').textContent = '$' + formatMoney(splitTotal);
+      document.getElementById('ledgerStatusText').textContent = balanced ? '🟢 帳務一致' : '🔴 帳務異常';
+      document.getElementById('ledgerStatusText').className = balanced ? 'good' : 'warn';
+      document.getElementById('monthValidationResult').textContent = balanced ? '一致' : '不一致';
+      document.getElementById('monthValidationResult').className = balanced ? 'good' : 'warn';
+
+      const balances = computeBalances();
+      const totalBalance = Object.values(balances).reduce(function(sum, value) { return sum + value; }, 0);
+      if (totalBalance !== 0) {
+        document.getElementById('ledgerStatusText').textContent = '🔴 帳務異常';
+        document.getElementById('ledgerStatusText').className = 'warn';
+      }
+
+      const balanceBox = document.getElementById('balanceSummary');
+      balanceBox.innerHTML = '';
+      PEOPLE.forEach(function(name) {
+        const value = roundInt(balances[name]);
+        const div = document.createElement('div');
+        div.className = 'status-card';
+        div.innerHTML = '<div class="status-top"><strong>' + name + '</strong><span class="' + (value > 0 ? 'good' : (value < 0 ? 'warn' : 'info')) + '">' + (value > 0 ? '應收' : value < 0 ? '應付' : '已平衡') + '</span></div><div class="summary-row"><span>目前金額</span><strong>$' + formatMoney(Math.abs(value)) + '</strong></div>';
+        balanceBox.appendChild(div);
+      });
+
+      const suggestions = computeSettlementSuggestions(balances);
+      const settlementBox = document.getElementById('settlementSuggestions');
+      settlementBox.innerHTML = '';
+      if (!suggestions.length) {
+        settlementBox.innerHTML = '<div class="settlement-card"><strong>目前無需清帳</strong><span class="good">帳目平衡</span></div>';
+      } else {
+        suggestions.forEach(function(item) {
+          const div = document.createElement('div');
+          div.className = 'settlement-card';
+          div.innerHTML = '<strong>' + item.from + ' ➜ ' + item.to + '</strong><span>$' + formatMoney(item.amount) + '</span>';
+          settlementBox.appendChild(div);
+        });
+      }
+
+      renderDetailTable(activeEntries, monthTotal, splitTotal);
+      renderHistory();
+    }
+
+    function renderDetailTable(activeEntries, monthTotal, splitTotal) {
+      const wrap = document.getElementById('detailTableWrap');
+      const expenseEntries = activeEntries.filter(function(entry) { return entry.type === 'expense'; });
+      const visibleNames = PEOPLE;
+      let html = '<table><thead><tr><th>日期</th><th>項目</th><th>付款巫師</th><th class="num">總額</th>';
+      visibleNames.forEach(function(name) { html += '<th class="num">' + name + '</th>'; });
+      html += '<th>驗證</th></tr></thead><tbody>';
+      expenseEntries.forEach(function(entry) {
+        const rowTotal = entry.allocation.reduce(function(sum, item) { return sum + roundInt(item.amount); }, 0);
+        const ok = rowTotal === roundInt(entry.total);
+        const map = {};
+        entry.allocation.forEach(function(item) { map[item.name] = roundInt(item.amount); });
+        html += '<tr>' +
+          '<td>' + (entry.createdAt || '').slice(5, 10) + '</td>' +
+          '<td>' + (entry.note || '') + '</td>' +
+          '<td>' + (entry.payer || '') + '</td>' +
+          '<td class="num">' + formatMoney(entry.total) + '</td>';
+        visibleNames.forEach(function(name) {
+          html += '<td class="num">' + formatMoney(map[name] || 0) + '</td>';
+        });
+        html += '<td>' + (ok ? '✅ 一致' : '❌ 不一致') + '</td></tr>';
+      });
+      html += '</tbody><tfoot><tr><td colspan="3">總計</td><td class="num">' + formatMoney(monthTotal) + '</td>';
+      visibleNames.forEach(function(name) {
+        const personTotal = expenseEntries.reduce(function(sum, entry) {
+          const found = entry.allocation.find(function(item) { return item.name === name; });
+          return sum + roundInt(found ? found.amount : 0);
+        }, 0);
+        html += '<td class="num">' + formatMoney(personTotal) + '</td>';
+      });
+      html += '<td>' + (monthTotal === splitTotal ? '✅' : '❌') + '</td></tr></tfoot></table>';
+      wrap.innerHTML = html;
+    }
+
+    function buildSettlementSummaryText() {
+      const balances = computeBalances();
+      const suggestions = computeSettlementSuggestions(balances);
+      if (!suggestions.length) return '📊【結算建議】\n目前無需清帳，帳目平衡。';
+      return ['📊【結算建議】', ''].concat(suggestions.map(function(item) {
+        return item.from + ' ➜ ' + item.to + '：$' + formatMoney(item.amount);
+      })).join('\n');
+    }
+
+    function copySettlementSummary() {
+      copyText(buildSettlementSummaryText(), '已複製結算建議');
+    }
+
+    async function sendSettlementToLine() {
+      const result = await sendExternalNotify(buildSettlementSummaryText(), 'SETTLEMENT');
+      showToast(result && result.ok !== false ? '已發送結算建議到 LINE' : '發送失敗');
+    }
+
+    function copyTableSummary() {
+      const activeEntries = entries.filter(function(entry) { return entry.status === 'active' && entry.type === 'expense'; });
+      const lines = ['【分帳帳冊明細表】'];
+      activeEntries.forEach(function(entry) {
+        lines.push((entry.createdAt || '').slice(5, 10) + '｜' + (entry.note || '') + '｜' + entry.payer + '｜$' + formatMoney(entry.total));
+      });
+      copyText(lines.join('\n'), '已複製表格摘要');
+    }
+
+    function exportPDF() {
+      const activeEntries = entries.filter(function(entry) { return entry.status === 'active' && entry.type === 'expense'; });
+      const balances = computeBalances();
+      const suggestions = computeSettlementSuggestions(balances);
+      const table = document.getElementById('detailTableWrap').innerHTML;
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>分帳帳冊明細表</title><style>
+        body{font-family:Arial,"Noto Sans TC",sans-serif;padding:24px;color:#333}
+        h1{font-size:22px;margin-bottom:8px}
+        p{margin:0 0 16px;color:#666}
+        table{width:100%;border-collapse:collapse;font-size:13px}
+        th,td{border:1px solid #ddd;padding:8px;text-align:left}
+        th,td.num{text-align:right}
+        th{background:#f7f7f7}
+        tfoot td{font-weight:700;background:#fafafa}
+        .block{margin-top:20px}
+    
+    .tabs { display: none !important; }
+    .hidden { display: none !important; }
+    .sticky-inner.one-button { grid-template-columns: 1fr; }
+    .history-card.dimmed { opacity: .55; filter: grayscale(.15); }
+
+  </style></head><body>
+        <h1>分帳帳冊明細表</h1>
+        <p>匯出時間：${nowText()}</p>
+        ${table}
+        <div class="block"><h2>結算建議</h2><p>${suggestions.length ? suggestions.map(function(item){return item.from + ' → ' + item.to + '：$' + formatMoney(item.amount);}).join('<br>') : '目前無需清帳'}</p></div>
+      </body></html>`;
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      setTimeout(function() { win.print(); }, 400);
+    }
+
+    loadConfig();
+    loadEntriesFromLocal();
+    applyRoleAndUserFromQuery();
+    applyUrlConfigFromQuery();
+    renderGasCode();
+    refreshModeSelectionUI();
+    buildDetailFields();
+    applyRoleUI();
+    document.getElementById('checkoutFrom').value = CURRENT_USER;
+    document.getElementById('checkoutTo').value = 'Beth';
+    renderCheckoutPreview();
+    recalculate();
+    renderHistory();
+    renderLedgerPage();
+    switchPage('record');
+    syncEntriesFromServer();
+  </script>
 </body>
 </html>
