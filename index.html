@@ -610,6 +610,7 @@
   <script>
     let CURRENT_USER = 'Beth';
     let APP_CONFIG = { apiUrl: '', notifyUrl: '', sheetId: '' };
+    const ENTRY_STORAGE_KEY = 'homeExpenseEntries';
     let entries = [];
     let editingEntryId = null;
     let sequence = 1;
@@ -737,6 +738,53 @@
       const hh = String(now.getHours()).padStart(2, '0');
       const mm = String(now.getMinutes()).padStart(2, '0');
       return y + '/' + m + '/' + d + ' ' + hh + ':' + mm;
+    }
+
+
+    function saveEntriesToLocal() {
+      try {
+        localStorage.setItem(ENTRY_STORAGE_KEY, JSON.stringify(entries));
+      } catch (error) {
+        console.error('local save failed', error);
+      }
+    }
+
+    function loadEntriesFromLocal() {
+      try {
+        const raw = localStorage.getItem(ENTRY_STORAGE_KEY);
+        entries = raw ? JSON.parse(raw) : [];
+      } catch (error) {
+        console.error('local load failed', error);
+        entries = [];
+      }
+      if (!Array.isArray(entries)) entries = [];
+      updateSequence();
+    }
+
+    function useServerEntries(serverEntries) {
+      if (!Array.isArray(serverEntries)) return;
+      entries = serverEntries.slice().sort(function(a, b) {
+        return String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+      });
+      updateSequence();
+      saveEntriesToLocal();
+      renderHistory();
+      renderLedgerPage();
+    }
+
+    function getApiUrl() {
+      return (document.getElementById('apiUrl').value || APP_CONFIG.apiUrl || '').trim();
+    }
+
+    function getNotifyUrl() {
+      return (document.getElementById('notifyUrl').value || APP_CONFIG.notifyUrl || '').trim();
+    }
+
+    function showServerError(title, result) {
+      const parts = [title];
+      if (result && result.message) parts.push(result.message);
+      if (result && result.raw) parts.push('原始回應：' + result.raw);
+      alert(parts.join('\n'));
     }
 
     function loadConfig() {
@@ -1211,23 +1259,49 @@
       showToast('目前使用者：' + CURRENT_USER);
     }
 
-    async function callApi(action, payload) {
-      const apiUrl = (document.getElementById('apiUrl').value || APP_CONFIG.apiUrl || '').trim();
+        async function callApi(action, payload) {
+      const apiUrl = getApiUrl();
       if (!apiUrl) return { ok: false, message: '尚未設定主系統 GAS URL' };
+
       try {
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(Object.assign({ action: action }, payload || {}))
         });
-        return await response.json();
+
+        const rawText = await response.text();
+        console.log('callApi raw response =', rawText);
+
+        let data = null;
+        try {
+          data = rawText ? JSON.parse(rawText) : {};
+        } catch (parseError) {
+          return {
+            ok: false,
+            message: 'GAS 沒有回傳合法 JSON',
+            raw: rawText,
+            status: response.status
+          };
+        }
+
+        if (!response.ok) {
+          return Object.assign({}, data || {}, {
+            ok: false,
+            message: (data && data.message) || ('HTTP ' + response.status),
+            raw: rawText,
+            status: response.status
+          });
+        }
+
+        return data || { ok: true };
       } catch (error) {
         return { ok: false, message: error.message || 'API 呼叫失敗' };
       }
     }
 
-    async function sendExternalNotify(text, entryId) {
-      const notifyUrl = (document.getElementById('notifyUrl').value || APP_CONFIG.notifyUrl || '').trim();
+        async function sendExternalNotify(text, entryId) {
+      const notifyUrl = getNotifyUrl();
       if (!notifyUrl) return { ok: true, skipped: true };
       try {
         const response = await fetch(notifyUrl, {
@@ -1239,22 +1313,41 @@
             entryId: entryId
           })
         });
-        return await response.json();
+        const rawText = await response.text();
+        let data = null;
+        try {
+          data = rawText ? JSON.parse(rawText) : {};
+        } catch (parseError) {
+          return { ok: false, message: 'LINE 通知端回傳格式錯誤', raw: rawText, status: response.status };
+        }
+        if (!response.ok) {
+          return Object.assign({}, data || {}, {
+            ok: false,
+            message: (data && data.message) || ('HTTP ' + response.status),
+            raw: rawText,
+            status: response.status
+          });
+        }
+        return data || { ok: true };
       } catch (error) {
         return { ok: false, message: error.message || 'notify failed' };
       }
     }
 
-    async function syncEntriesFromServer() {
-      const result = await callApi('list_entries', {});
-      if (result && result.ok && Array.isArray(result.entries)) {
-        entries = result.entries.sort(function(a, b) {
-          return String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
-        });
-        updateSequence();
+        async function syncEntriesFromServer() {
+      const apiUrl = getApiUrl();
+      if (!apiUrl) {
         renderHistory();
         renderLedgerPage();
+        return { ok: true, skipped: true };
       }
+      const result = await callApi('list_entries', {});
+      if (result && result.ok && Array.isArray(result.entries)) {
+        useServerEntries(result.entries);
+        return result;
+      }
+      console.warn('syncEntriesFromServer failed', result);
+      return result || { ok: false, message: '同步失敗' };
     }
 
     function updateSequence() {
@@ -1279,18 +1372,21 @@
       renderCheckoutPreview();
     }
 
-    async function submitEntry() {
+        async function submitEntry() {
       const check = validateForm();
       const total = roundInt(document.getElementById('totalAmount').value || 0);
       const allocation = getAllocation();
       const assigned = roundInt(allocation.reduce(function(sum, item) { return sum + item.amount; }, 0));
       if (!check.ok) return alert(check.message);
       if (total !== assigned) return alert('分配總和與總額不一致。');
+
       const now = nowText();
+      const isEditing = !!editingEntryId;
       const entry = {
         id: editingEntryId || ('E' + sequence++),
         type: 'expense',
         createdBy: CURRENT_USER,
+        currentUser: CURRENT_USER,
         createdAt: now,
         updatedAt: now,
         payer: document.getElementById('payer').value,
@@ -1299,9 +1395,12 @@
         mode: selectedMode(),
         allocation: allocation,
         settlements: buildSettlement(allocation, document.getElementById('payer').value),
+        lineMessage: '',
         status: 'active'
       };
-      if (editingEntryId) {
+      entry.lineMessage = buildPrettyLineMessage(entry);
+
+      if (isEditing) {
         const idx = entries.findIndex(function(x) { return x.id === editingEntryId; });
         if (idx < 0 || entries[idx].createdBy !== CURRENT_USER) return alert('只能修改自己填寫的紀錄。');
         entry.createdAt = entries[idx].createdAt;
@@ -1309,15 +1408,39 @@
       } else {
         entries.unshift(entry);
       }
+
+      updateSequence();
+      saveEntriesToLocal();
       renderHistory();
       renderLedgerPage();
+
       const saveResult = await callApi('upsert_entry', { entry: entry });
-      if (!saveResult.ok) {
+      console.log('submitEntry saveResult =', saveResult);
+
+      if (!saveResult || !saveResult.ok) {
+        showServerError('雲端寫入失敗', saveResult);
         showToast('本地已更新，但雲端寫入失敗');
-      } else {
-        const notifyResult = await sendExternalNotify(buildPrettyLineMessage(entry), entry.id);
-        showToast(notifyResult && notifyResult.ok !== false ? (editingEntryId ? '已修改並同步 LINE' : '新增成功，已通知群組') : '已入帳，但 LINE 通知失敗');
+        return;
       }
+
+      if (saveResult.entry) {
+        const idx = entries.findIndex(function(x) { return x.id === saveResult.entry.id; });
+        if (idx >= 0) entries[idx] = Object.assign({}, entries[idx], saveResult.entry);
+        saveEntriesToLocal();
+        renderHistory();
+        renderLedgerPage();
+      }
+
+      const notifyResult = await sendExternalNotify(entry.lineMessage, entry.id);
+      console.log('submitEntry notifyResult =', notifyResult);
+
+      if (notifyResult && notifyResult.ok === false) {
+        showServerError('LINE 通知失敗', notifyResult);
+        showToast('已入帳，但 LINE 通知失敗');
+      } else {
+        showToast(isEditing ? '已修改並同步 LINE' : '新增成功，已通知群組');
+      }
+
       resetFormAfterSubmit();
       await syncEntriesFromServer();
     }
@@ -1335,31 +1458,62 @@
       document.getElementById('checkoutPreviewBox').textContent = getCheckoutPreviewText();
     }
 
-    async function submitCheckout() {
+        async function submitCheckout() {
       const check = validateCheckout();
       if (!check.ok) return alert(check.message);
+
       const entry = {
         id: 'C' + sequence++,
         type: 'checkout',
         createdBy: CURRENT_USER,
+        currentUser: CURRENT_USER,
         createdAt: nowText(),
         updatedAt: nowText(),
         from: document.getElementById('checkoutFrom').value,
         to: document.getElementById('checkoutTo').value,
         amount: roundInt(document.getElementById('checkoutAmount').value || 0),
         note: document.getElementById('checkoutNote').value.trim(),
+        lineMessage: '',
         status: 'active'
       };
+      entry.lineMessage = buildPrettyLineMessage(entry);
+
       entries.unshift(entry);
+      updateSequence();
+      saveEntriesToLocal();
       renderHistory();
       renderLedgerPage();
+
       const saveResult = await callApi('upsert_entry', { entry: entry });
-      if (!saveResult.ok) {
+      console.log('submitCheckout saveResult =', saveResult);
+
+      if (!saveResult || !saveResult.ok) {
+        showServerError('清帳雲端寫入失敗', saveResult);
         showToast('本地已清帳，但雲端寫入失敗');
-      } else {
-        const notifyResult = await sendExternalNotify(buildPrettyLineMessage(entry), entry.id);
-        showToast(notifyResult && notifyResult.ok !== false ? '清帳成功，已通知群組' : '清帳已入帳，但 LINE 通知失敗');
+        return;
       }
+
+      if (saveResult.entry) {
+        const idx = entries.findIndex(function(x) { return x.id === saveResult.entry.id; });
+        if (idx >= 0) entries[idx] = Object.assign({}, entries[idx], saveResult.entry);
+        saveEntriesToLocal();
+        renderHistory();
+        renderLedgerPage();
+      }
+
+      const notifyResult = await sendExternalNotify(entry.lineMessage, entry.id);
+      console.log('submitCheckout notifyResult =', notifyResult);
+
+      if (notifyResult && notifyResult.ok === false) {
+        showServerError('LINE 通知失敗', notifyResult);
+        showToast('清帳已入帳，但 LINE 通知失敗');
+      } else {
+        showToast('清帳成功，已通知群組');
+      }
+
+      document.getElementById('checkoutAmount').value = '';
+      document.getElementById('checkoutNote').value = '已轉帳';
+      renderCheckoutPreview();
       await syncEntriesFromServer();
     }
 
@@ -1393,21 +1547,28 @@
       showToast('已載入可修改的紀錄');
     }
 
-    async function voidEntry(id) {
+        async function voidEntry(id) {
       const entry = entries.find(function(x) { return x.id === id; });
       if (!entry) return;
       if (entry.createdBy !== CURRENT_USER) return alert('只能作廢自己填寫的紀錄。');
+
       entry.status = 'void';
       entry.updatedAt = nowText();
+      saveEntriesToLocal();
       renderHistory();
       renderLedgerPage();
+
       const result = await callApi('void_entry', { entryId: id, operator: CURRENT_USER, updatedAt: entry.updatedAt });
-      if (!result.ok) {
+      console.log('voidEntry result =', result);
+
+      if (!result || !result.ok) {
+        showServerError('雲端作廢失敗', result);
         showToast('本地已作廢，但雲端更新失敗');
-      } else {
-        await sendExternalNotify('⚠️【作廢通知】\n' + CURRENT_USER + ' 作廢了紀錄 ' + id, id);
-        showToast('已作廢你的紀錄');
+        return;
       }
+
+      await sendExternalNotify('⚠️【作廢通知】\n' + CURRENT_USER + ' 作廢了紀錄 ' + id, id);
+      showToast('已作廢你的紀錄');
       await syncEntriesFromServer();
     }
 
@@ -1646,13 +1807,14 @@
     }
 
     loadConfig();
+    loadEntriesFromLocal();
     applyRoleAndUserFromQuery();
     applyUrlConfigFromQuery();
     renderGasCode();
     refreshModeSelectionUI();
     buildDetailFields();
     applyRoleUI();
-    document.getElementById('checkoutFrom').value = 'Rainie';
+    document.getElementById('checkoutFrom').value = CURRENT_USER;
     document.getElementById('checkoutTo').value = 'Beth';
     renderCheckoutPreview();
     recalculate();
