@@ -985,7 +985,6 @@
         input.min = '0';
         input.id = 'val_' + name;
         input.oninput = recalculate;
-        input.onblur = function() { normalizeEmptyDetailInputs(true); recalculate(); };
         if (mode === 'split3' || mode === 'split4') input.disabled = true;
         if (mode === 'weight') input.placeholder = '權重';
         if (mode === 'custom') input.placeholder = '金額';
@@ -1020,20 +1019,6 @@
       recalculate();
     }
 
-    function normalizeEmptyDetailInputs(forceFill) {
-      const mode = selectedMode();
-      if (mode === 'split3' || mode === 'split4') return;
-      const total = roundInt(document.getElementById('totalAmount').value || 0);
-      const assigned = roundInt(getAllocation().reduce(function(sum, item) { return sum + item.amount; }, 0));
-      const shouldFill = !!forceFill || (total > 0 && total === assigned);
-      if (!shouldFill) return;
-      visiblePeople().forEach(function(name) {
-        const el = document.getElementById('val_' + name);
-        if (!el || el.disabled) return;
-        if (String(el.value || '').trim() === '') el.value = '0';
-      });
-    }
-
     function clearInputs() {
       visiblePeople().forEach(function(name) {
         const el = document.getElementById('val_' + name);
@@ -1066,6 +1051,13 @@
       const mode = selectedMode();
       const names = visiblePeople();
       if (!total || total <= 0) return { ok: false, message: '請輸入大於 0 的整數金額。' };
+      if (mode === 'custom') {
+        const values = names.map(function(name) {
+          const el = document.getElementById('val_' + name);
+          return el ? el.value : '';
+        });
+        if (values.some(function(v) { return v === ''; })) return { ok: false, message: '自訂金額模式下，請填寫每一位的金額。' };
+      }
       if (mode === 'weight') {
         const weights = names.map(function(name) {
           return roundInt((document.getElementById('val_' + name) || {}).value || 0);
@@ -1161,7 +1153,6 @@
     }
 
     function recalculate() {
-      normalizeEmptyDetailInputs(false);
       const total = roundInt(document.getElementById('totalAmount').value || 0);
       const allocation = getAllocation();
       const assigned = roundInt(allocation.reduce(function(sum, item) { return sum + item.amount; }, 0));
