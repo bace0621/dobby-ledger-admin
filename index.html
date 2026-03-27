@@ -4,31 +4,80 @@
 <meta charset="UTF-8">
 <title>多比的分帳學院</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body { font-family: sans-serif; padding:20px; }
-input,select,button { margin:5px 0; padding:8px; width:100%; }
-button { background:#4CAF50;color:white;border:none; }
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #f5f7fb;
+  margin: 0;
+  padding: 20px;
+}
+
+.card {
+  max-width: 420px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+label {
+  font-size: 14px;
+  color: #555;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #574fd6;
+}
 </style>
 </head>
 
 <body>
 
-<h2>💸 多比的分帳學院</h2>
+<div class="card">
+  <h2>💸 多比的分帳學院</h2>
 
-<label>付款人</label>
-<select id="payer">
-  <option>Beth</option>
-  <option>Rainie</option>
-  <option>Ann</option>
-</select>
+  <label>付款人</label>
+  <select id="payer">
+    <option>Beth</option>
+    <option>Rainie</option>
+    <option>Ann</option>
+  </select>
 
-<label>金額</label>
-<input id="totalAmount" placeholder="輸入金額">
+  <label>金額</label>
+  <input id="totalAmount" placeholder="請輸入金額">
 
-<label>備註</label>
-<input id="note" placeholder="">
+  <label>備註</label>
+  <input id="note" placeholder="（例如：午餐、飲料）">
 
-<button onclick="submit()">送出</button>
+  <button onclick="submit()">✨ 送出記帳</button>
+</div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbw0Gq6yOyj2D0H2CTQW3lkEnxDejzDnwDCmHaEXQgMWizCQcnS1FiJ7fHq9qpqSBUOn/exec";
@@ -54,7 +103,7 @@ async function submit() {
     note
   };
 
-  // ===== GAS =====
+  // GAS
   const res = await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
@@ -70,26 +119,25 @@ async function submit() {
     return;
   }
 
-  // ===== LINE =====
+  // LINE
   const notify = await fetch(NOTIFY_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       action: "push_group_message",
-      text: `💸 新增記帳\n${payer} 花了 ${total} 元\n${note || ""}`
+      text: `💸 新增記帳\n👤 ${payer}\n💰 ${total} 元\n📝 ${note || "（無備註）"}`
     })
   });
 
   const notifyResult = await notify.json();
-  console.log("notify:", notifyResult);
 
   if (!notifyResult.ok) {
     alert("LINE失敗：" + JSON.stringify(notifyResult));
   }
 
-  alert("完成");
+  alert("記帳完成 🎉");
 
-  // 清空
+  // 清空（重點）
   document.getElementById("totalAmount").value = "";
   document.getElementById("note").value = "";
 }
