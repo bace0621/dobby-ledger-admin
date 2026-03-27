@@ -644,8 +644,8 @@
       const checkoutFromEl = document.getElementById('checkoutFrom');
       const settingsPage = document.getElementById('page-settings');
       currentUserEl.value = CURRENT_USER;
-      payerEl.value = CURRENT_USER;
-      checkoutFromEl.value = CURRENT_USER;
+      if (!payerEl.value || !PEOPLE.includes(payerEl.value)) payerEl.value = CURRENT_USER;
+      if (!checkoutFromEl.value || !PEOPLE.includes(checkoutFromEl.value)) checkoutFromEl.value = CURRENT_USER;
       if (APP_ROLE === 'admin') {
         currentUserEl.disabled = false;
         payerEl.disabled = false;
@@ -654,8 +654,8 @@
         settingsPage.classList.remove('hidden');
       } else {
         currentUserEl.disabled = true;
-        payerEl.disabled = true;
-        checkoutFromEl.disabled = true;
+        payerEl.disabled = false;
+        checkoutFromEl.disabled = false;
         settingsPage.classList.add('hidden');
       }
       renderCheckoutPreview();
@@ -968,6 +968,22 @@
       });
     }
 
+    function normalizeSplitField(input, forceZero) {
+      if (!input || input.disabled) return;
+      const raw = String(input.value || '').trim();
+      if (raw === '') {
+        if (forceZero) input.value = '0';
+        return;
+      }
+      input.value = String(roundInt(raw));
+    }
+
+    function normalizeEmptySplitFields(forceZero) {
+      visiblePeople().forEach(function(name) {
+        normalizeSplitField(document.getElementById('val_' + name), forceZero);
+      });
+    }
+
     function buildDetailFields() {
       const grid = document.getElementById('splitGrid');
       const mode = selectedMode();
@@ -985,6 +1001,10 @@
         input.min = '0';
         input.id = 'val_' + name;
         input.oninput = recalculate;
+        input.onblur = function() {
+          normalizeSplitField(input, true);
+          recalculate();
+        };
         if (mode === 'split3' || mode === 'split4') input.disabled = true;
         if (mode === 'weight') input.placeholder = '權重';
         if (mode === 'custom') input.placeholder = '金額';
@@ -1051,13 +1071,6 @@
       const mode = selectedMode();
       const names = visiblePeople();
       if (!total || total <= 0) return { ok: false, message: '請輸入大於 0 的整數金額。' };
-      if (mode === 'custom') {
-        const values = names.map(function(name) {
-          const el = document.getElementById('val_' + name);
-          return el ? el.value : '';
-        });
-        if (values.some(function(v) { return v === ''; })) return { ok: false, message: '自訂金額模式下，請填寫每一位的金額。' };
-      }
       if (mode === 'weight') {
         const weights = names.map(function(name) {
           return roundInt((document.getElementById('val_' + name) || {}).value || 0);
@@ -1154,9 +1167,15 @@
 
     function recalculate() {
       const total = roundInt(document.getElementById('totalAmount').value || 0);
-      const allocation = getAllocation();
-      const assigned = roundInt(allocation.reduce(function(sum, item) { return sum + item.amount; }, 0));
-      const diff = total - assigned;
+      let allocation = getAllocation();
+      let assigned = roundInt(allocation.reduce(function(sum, item) { return sum + item.amount; }, 0));
+      let diff = total - assigned;
+      if (diff === 0) {
+        normalizeEmptySplitFields(true);
+        allocation = getAllocation();
+        assigned = roundInt(allocation.reduce(function(sum, item) { return sum + item.amount; }, 0));
+        diff = total - assigned;
+      }
       const check = validateForm();
       const ok = check.ok && diff === 0;
       document.getElementById('sumTotal').textContent = formatMoney(total);
