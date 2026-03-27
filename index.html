@@ -462,12 +462,12 @@
       <div class="card">
         <h2 class="section-title">記帳檢查</h2>
         <div class="summary-card">
-          <div class="summary-row"><span>總金額</span><strong id="sumTotal">300</strong></div>
-          <div class="summary-row"><span>已分配</span><strong id="sumAssigned">300</strong></div>
+          <div class="summary-row"><span>總金額</span><strong id="sumTotal">0</strong></div>
+          <div class="summary-row"><span>已分配</span><strong id="sumAssigned">0</strong></div>
           <div class="summary-row"><span>差額</span><strong id="sumDiff">0</strong></div>
           <div class="summary-row"><span>狀態</span><strong id="sumStatus" class="good">✅ 正常</strong></div>
         </div>
-        <div class="helper" id="validationNote">可送出。</div>
+        <div class="helper" id="validationNote">請先輸入金額與備註。</div>
       </div>
 
       <div class="card">
@@ -572,8 +572,9 @@
           <input id="apiUrl" placeholder="https://script.google.com/macros/s/AKfycbw0Gq6yOyj2D0H2CTQW3lkEnxDejzDnwDCmHaEXQgMWizCQcnS1FiJ7fHq9qpqSBUOn/exec" />
         </div>
         <div class="field">
-         <label>群組通知網址（Cloudflare Worker）</label>
-<input id="notifyUrl" value="https://dobby-line-webhook.bace0621.workers.dev/" placeholder="請貼上 workers.dev 網址" />
+          <label>群組通知網址（Cloudflare Worker）</label>
+          <input id="notifyUrl" placeholder="
+https://dobby-line-webhook.bace0621.workers.dev/" />
         </div>
         <div class="field">
           <label>Google Sheet ID</label>
@@ -1363,7 +1364,7 @@
       editingEntryId = null;
       document.getElementById('payer').value = CURRENT_USER;
       document.getElementById('checkoutFrom').value = CURRENT_USER;
-      document.getElementById('totalAmount').value = '300';
+      document.getElementById('totalAmount').value = '';
       document.getElementById('note').value = '';
       document.querySelector('input[name="mode"][value="split3"]').checked = true;
       refreshModeSelectionUI();
