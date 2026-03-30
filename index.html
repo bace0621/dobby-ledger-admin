@@ -86,7 +86,7 @@
       color: var(--muted);
     }
 
-    input, select {
+    input, select, textarea {
       width: 100%;
       border: 1.5px solid #f0d5e2;
       background: #fff;
@@ -97,7 +97,7 @@
       outline: none;
       appearance: none;
     }
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 4px rgba(255, 119, 168, 0.12);
     }
@@ -351,6 +351,62 @@
     }
     .toast.show { opacity: 1; }
 
+
+    .magic-spark, .owl-fly {
+      position: fixed;
+      z-index: 120;
+      pointer-events: none;
+    }
+
+    .magic-spark {
+      left: 50%;
+      top: 52%;
+      font-size: 32px;
+      transform: translate(-50%, -50%);
+      animation: magicSparkPop 1s ease forwards;
+      filter: drop-shadow(0 4px 10px rgba(216, 180, 92, 0.45));
+    }
+
+    .owl-fly {
+      left: 24px;
+      bottom: calc(var(--sticky-h) + 22px);
+      font-size: 30px;
+      animation: owlFlyAway 1.2s ease forwards;
+      filter: drop-shadow(0 8px 16px rgba(75, 59, 71, 0.18));
+    }
+
+    .btn-main {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-main::after {
+      content: "";
+      position: absolute;
+      inset: -35%;
+      background: radial-gradient(circle, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 55%);
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+
+    .btn-main:active::after {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    @keyframes magicSparkPop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+      35% { opacity: 1; transform: translate(-50%, -56%) scale(1.18); }
+      100% { opacity: 0; transform: translate(-50%, -70%) scale(1.55); }
+    }
+
+    @keyframes owlFlyAway {
+      0% { opacity: 0; transform: translate(0, 0) scale(0.8) rotate(-8deg); }
+      20% { opacity: 1; transform: translate(10px, -8px) scale(1); }
+      100% { opacity: 0; transform: translate(280px, -260px) scale(1.08) rotate(10deg); }
+    }
+
     @media (max-width: 480px) {
       body { padding-inline: 10px; }
       .hero h1 { font-size: 22px; }
@@ -408,7 +464,7 @@
         </div>
         <div class="field">
           <label>註記 / 項目名稱</label>
-          <input id="note" value="" oninput="recalculate()" />
+          <textarea id="note" inputmode="text" spellcheck="true" autocomplete="on" autocapitalize="sentences" placeholder="🪄 記錄這筆魔法支出，可輸入文字、符號、數字" oninput="recalculate()"></textarea>
         </div>
       </div>
 
@@ -506,7 +562,7 @@
         </div>
         <div class="field">
           <label>清帳註記</label>
-          <input id="checkoutNote" value="已轉帳" oninput="renderCheckoutPreview()" />
+          <textarea id="checkoutNote" inputmode="text" spellcheck="true" autocomplete="on" autocapitalize="sentences" placeholder="🦉 例如：已轉帳、已收現、代墊歸還" oninput="renderCheckoutPreview()">已轉帳</textarea>
         </div>
         <div class="preview-box" id="checkoutPreviewBox"></div>
         <div class="actions">
@@ -704,6 +760,23 @@
       toast.classList.add('show');
       clearTimeout(showToast.timer);
       showToast.timer = setTimeout(function() { toast.classList.remove('show'); }, 1600);
+    }
+
+
+    function magicSparkle(symbol) {
+      const spark = document.createElement('div');
+      spark.className = 'magic-spark';
+      spark.textContent = symbol || '✨';
+      document.body.appendChild(spark);
+      setTimeout(function() { spark.remove(); }, 1000);
+    }
+
+    function owlFly(symbol) {
+      const owl = document.createElement('div');
+      owl.className = 'owl-fly';
+      owl.textContent = symbol || '🦉';
+      document.body.appendChild(owl);
+      setTimeout(function() { owl.remove(); }, 1250);
     }
 
     function switchPage(page) {
@@ -1460,9 +1533,12 @@
 
       if (notifyResult && notifyResult.ok === false) {
         showServerError('LINE 通知失敗', notifyResult);
+        magicSparkle('⚠️');
         showToast('已入帳，但 LINE 通知失敗');
       } else {
-        showToast(isEditing ? '已修改並同步 LINE' : '新增成功，已通知群組');
+        magicSparkle(isEditing ? '🪄' : '✨');
+        owlFly('🦉');
+        showToast(isEditing ? '🪄 咒語已更新並送出信箋' : '🦉 信箋已送往群組');
       }
 
       resetFormAfterSubmit();
@@ -1530,9 +1606,12 @@
 
       if (notifyResult && notifyResult.ok === false) {
         showServerError('LINE 通知失敗', notifyResult);
+        magicSparkle('⚠️');
         showToast('清帳已入帳，但 LINE 通知失敗');
       } else {
-        showToast('清帳成功，已通知群組');
+        magicSparkle('💫');
+        owlFly('🪶');
+        showToast('🪄 Finite Debt，清帳信箋已送出');
       }
 
       document.getElementById('checkoutAmount').value = '';
