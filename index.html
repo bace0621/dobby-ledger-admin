@@ -838,7 +838,7 @@
       }
       if (!Array.isArray(entries)) entries = [];
       entries.sort(function(a, b) {
-        return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        return extractIdNum(b.id) - extractIdNum(a.id);
       });
       updateSequence();
     }
@@ -846,7 +846,7 @@
     function useServerEntries(serverEntries) {
       if (!Array.isArray(serverEntries)) return;
       entries = serverEntries.slice().sort(function(a, b) {
-        return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        return extractIdNum(b.id) - extractIdNum(a.id);
       });
       updateSequence();
       saveEntriesToLocal();
@@ -1448,10 +1448,14 @@
       return result || { ok: false, message: '同步失敗' };
     }
 
+    function extractIdNum(id) {
+      return Number(String(id || '').replace(/[^0-9]/g, '')) || 0;
+    }
+
     function updateSequence() {
       let maxId = 0;
       entries.forEach(function(entry) {
-        const numeric = Number(String(entry.id || '').replace(/[^0-9]/g, ''));
+        const numeric = extractIdNum(entry.id);
         if (numeric > maxId) maxId = numeric;
       });
       sequence = Math.max(sequence, maxId + 1);
