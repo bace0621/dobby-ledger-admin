@@ -1444,7 +1444,7 @@
         useServerEntries(result.entries);
         return result;
       }
-      console.warn('syncEntriesFromServer failed', result);
+      console.warn('syncEntriesFromServer failed', JSON.stringify(result));
       return result || { ok: false, message: '同步失敗' };
     }
 
