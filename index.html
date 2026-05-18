@@ -837,13 +837,16 @@
         entries = [];
       }
       if (!Array.isArray(entries)) entries = [];
+      entries.sort(function(a, b) {
+        return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+      });
       updateSequence();
     }
 
     function useServerEntries(serverEntries) {
       if (!Array.isArray(serverEntries)) return;
       entries = serverEntries.slice().sort(function(a, b) {
-        return String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+        return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
       });
       updateSequence();
       saveEntriesToLocal();
