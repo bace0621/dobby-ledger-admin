@@ -838,7 +838,7 @@
       }
       if (!Array.isArray(entries)) entries = [];
       entries.sort(function(a, b) {
-        return extractIdNum(b.id) - extractIdNum(a.id);
+        return parseEntryDate(b.createdAt) - parseEntryDate(a.createdAt);
       });
       updateSequence();
     }
@@ -846,7 +846,7 @@
     function useServerEntries(serverEntries) {
       if (!Array.isArray(serverEntries)) return;
       entries = serverEntries.slice().sort(function(a, b) {
-        return extractIdNum(b.id) - extractIdNum(a.id);
+        return parseEntryDate(b.createdAt) - parseEntryDate(a.createdAt);
       });
       updateSequence();
       saveEntriesToLocal();
@@ -1452,6 +1452,20 @@
       return Number(String(id || '').replace(/[^0-9]/g, '')) || 0;
     }
 
+    function parseEntryDate(str) {
+      if (!str) return new Date(0);
+      var d = new Date(str);
+      return isNaN(d.getTime()) ? new Date(0) : d;
+    }
+
+    function formatEntryDate(str) {
+      var d = parseEntryDate(str);
+      if (!d || d.getTime() === 0) return '';
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      return m + '/' + day;
+    }
+
     function updateSequence() {
       let maxId = 0;
       entries.forEach(function(entry) {
@@ -1835,7 +1849,7 @@
         const map = {};
         entry.allocation.forEach(function(item) { map[item.name] = roundInt(item.amount); });
         html += '<tr>' +
-          '<td>' + (entry.createdAt || '').slice(5, 10) + '</td>' +
+          '<td>' + formatEntryDate(entry.createdAt) + '</td>' +
           '<td>' + (entry.note || '') + '</td>' +
           '<td>' + (entry.payer || '') + '</td>' +
           '<td class="num">' + formatMoney(entry.total) + '</td>';
@@ -1878,7 +1892,7 @@
       const activeEntries = entries.filter(function(entry) { return entry.status === 'active' && entry.type === 'expense'; });
       const lines = ['【分帳帳冊明細表】'];
       activeEntries.forEach(function(entry) {
-        lines.push((entry.createdAt || '').slice(5, 10) + '｜' + (entry.note || '') + '｜' + entry.payer + '｜$' + formatMoney(entry.total));
+        lines.push(formatEntryDate(entry.createdAt) + '｜' + (entry.note || '') + '｜' + entry.payer + '｜$' + formatMoney(entry.total));
       });
       copyText(lines.join('\n'), '已複製表格摘要');
     }
