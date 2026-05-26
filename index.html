@@ -298,6 +298,10 @@
     .tl-chip-person { background:#fef0f8;color:#8b4f7a;border:0.5px solid #f5d0e8; }
     .tl-chip-checkout { background:#e8f8f0;color:#0a5c45;border:0.5px solid #b2d8c4; }
     .tl-chip-void { background:#f5f0f3;color:#9f8a96;text-decoration:line-through; }
+    .tl-chip-sealed { background:#EEEDFE;color:#3C3489;border:0.5px solid #AFA9EC; }
+    .tl-dot.tl-sealed { border-color:#AFA9EC;background:#EEEDFE; }
+    .tl-card.tl-sealed { background:linear-gradient(135deg,#f8f7ff,#f3f0fe);border-color:#AFA9EC; }
+    .tl-card.tl-sealed:hover { border-color:#7F77DD;box-shadow:0 0 10px 2px rgba(127,119,221,0.15);animation:none; }
     .tl-detail { margin-top:10px;padding-top:10px;border-top:0.5px solid #ead7b2;display:none; }
     .tl-detail.open { display:block;animation:tlExpandIn 0.2s ease-out; }
     .tl-detail-label { font-size:11px;color:#8b6f81;margin-bottom:6px;letter-spacing:0.05em; }
@@ -1787,6 +1791,11 @@
         box.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:12px 0;">目前尚無卷宗。</div>';
         return;
       }
+
+      // 找最新結清時間
+      const lcp = latestConfirmedPeriod();
+      const sealCutoff = lcp ? new Date(lcp.confirmedAt) : null;
+
       const outer = document.createElement('div');
       outer.className = 'tl-outer';
       const axis = document.createElement('div');
@@ -1798,28 +1807,28 @@
         const canEdit = entry.createdBy === CURRENT_USER;
         const isVoid = entry.status === 'void';
         const isCheckout = entry.type === 'checkout';
-        const typeKey = isVoid ? 'tl-void' : isCheckout ? 'tl-checkout' : 'tl-expense';
-        const dotIcon = isVoid ? '💀' : isCheckout ? '✨' : '📜';
+        const isSealed = !isVoid && sealCutoff && new Date(entry.createdAt) <= sealCutoff;
+
+        const dotIcon = isVoid ? '💀' : isSealed ? '🔒' : isCheckout ? '✨' : '📜';
+        const typeKey = isVoid ? 'tl-void' : isSealed ? 'tl-sealed' : isCheckout ? 'tl-checkout' : 'tl-expense';
         const title = isCheckout ? (entry.note || '還款') : (entry.note || '未命名項目');
         const dateStr = formatEntryDate(entry.createdAt || entry.updatedAt);
         const caster = entry.createdBy || '？';
-        const typeLabel = isCheckout ? 'Finite 清帳' : 'Accio 記帳';
+        const typeLabel = isVoid ? 'Finite 作廢' : isSealed ? '🔒 已封存' : isCheckout ? 'Finite 清帳' : 'Accio 記帳';
 
         const item = document.createElement('div');
         item.className = 'tl-item';
 
-        // dot
         const dot = document.createElement('div');
         dot.className = 'tl-dot ' + typeKey;
         dot.textContent = dotIcon;
         item.appendChild(dot);
 
-        // card
         const card = document.createElement('div');
-        card.className = 'tl-card' + (isCheckout ? ' tl-checkout' : '') + (isVoid ? ' tl-void' : '');
+        card.className = 'tl-card' + (isCheckout && !isSealed ? ' tl-checkout' : '') + (isVoid ? ' tl-void' : '') + (isSealed ? ' tl-sealed' : '');
         if (!isVoid) card.onclick = function() { toggleTlDetail(card); };
 
-        // row1: name + amount
+        // amount
         let amtText = '';
         if (isCheckout) {
           amtText = '<span class="tl-amt tl-green">−$' + formatMoney(entry.amount) + '</span>';
@@ -1828,12 +1837,23 @@
         } else {
           amtText = '<span class="tl-amt">$' + formatMoney(entry.total) + '</span>';
         }
-        const nameStyle = isVoid ? 'text-decoration:line-through;color:#9f8a96;' : '';
+        const nameStyle = isVoid ? 'text-decoration:line-through;color:#9f8a96;' : isSealed ? 'color:#534AB7;' : '';
 
         // chips
         let chips = '';
         if (isVoid) {
           chips = '<span class="tl-chip tl-chip-void">💀 咒語已解除</span>';
+        } else if (isSealed) {
+          chips = '<span class="tl-chip tl-chip-sealed">🔒 已封存</span>';
+          if (isCheckout) {
+            chips += '<span class="tl-chip tl-chip-person">' + entry.from + ' 付出</span>'
+              + '<span class="tl-chip tl-chip-person">' + entry.to + ' 收回</span>';
+          } else {
+            chips += '<span class="tl-chip tl-chip-payer">📜 ' + entry.payer + ' 墊付</span>';
+            (entry.allocation || []).forEach(function(a) {
+              if (roundInt(a.amount) > 0) chips += '<span class="tl-chip tl-chip-person">' + a.name + ' $' + formatMoney(a.amount) + '</span>';
+            });
+          }
         } else if (isCheckout) {
           chips = '<span class="tl-chip tl-chip-checkout">✨ 還款</span>'
             + '<span class="tl-chip tl-chip-person">' + entry.from + ' 付出</span>'
@@ -1845,7 +1865,7 @@
           });
         }
 
-        // detail rows
+        // detail
         let detailRows = '';
         if (isVoid) {
           detailRows = '<div class="tl-detail-row" style="color:#9f8a96;">此咒語已解除，不列入帳冊計算。</div>';
@@ -1860,14 +1880,15 @@
           });
         }
 
-        // buttons
-        const editDisabled = (!canEdit || isVoid || isCheckout) ? 'disabled' : '';
-        const voidDisabled = (!canEdit || isVoid) ? 'disabled' : '';
+        // buttons — sealed 只能複製
+        const editDisabled = (!canEdit || isVoid || isCheckout || isSealed) ? 'disabled' : '';
+        const voidDisabled = (!canEdit || isVoid || isSealed) ? 'disabled' : '';
+        const sealNote = isSealed ? '<div style="font-size:11px;color:#7F77DD;margin-top:6px;">🔒 此咒語已封存，無法修改或作廢。</div>' : '';
         const btns = '<div class="tl-btns">'
           + '<button class="tl-btn" onclick="event.stopPropagation();copyHistoryNotice(\'' + entry.id + '\')">📋 複製</button>'
           + '<button class="tl-btn" ' + editDisabled + ' onclick="event.stopPropagation();editEntry(\'' + entry.id + '\')">✏️ 修改</button>'
           + '<button class="tl-btn tl-danger" ' + voidDisabled + ' onclick="event.stopPropagation();voidEntry(\'' + entry.id + '\')">Finite 作廢</button>'
-          + '</div>';
+          + '</div>' + sealNote;
 
         card.innerHTML = '<div class="tl-row1">'
           + '<span class="tl-name" style="' + nameStyle + '">' + title + '</span>'
@@ -1883,6 +1904,7 @@
 
       box.appendChild(outer);
     }
+
 
     function toggleTlDetail(card) {
       const d = card.querySelector('.tl-detail');
