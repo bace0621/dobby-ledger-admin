@@ -436,6 +436,7 @@
       <button class="tab-btn" data-page="ledger" onclick="switchPage('ledger')">📜 查閱帳冊</button>
       <button class="tab-btn" data-page="settings" onclick="switchPage('settings')">🪄 魔法設定</button>
     </div>
+    <div id="periodBanner" style="display:none;margin-bottom:10px;padding:10px 14px;border-radius:16px;font-size:13px;background:#fff7ea;border:1px solid #ead7b2;color:#8b6f81;"></div>
 
     <section class="page active" id="page-record">
       <div class="card">
@@ -586,10 +587,10 @@
           <div class="status-card">
             <div class="status-top">
               <strong id="ledgerStatusText" class="good">🟢 帳務一致</strong>
-              <span class="status-pill" id="currentMonthText">本月帳冊</span>
+              <span class="status-pill" id="currentPeriodLabel">本期帳冊</span>
             </div>
-            <div class="summary-row"><span>本月總支出</span><strong id="monthExpenseTotal">0</strong></div>
-            <div class="summary-row"><span>分帳總和</span><strong id="monthSplitTotal">0</strong></div>
+            <div class="summary-row"><span>本期總支出</span><strong id="monthExpenseTotal">$0</strong></div>
+            <div class="summary-row"><span>分帳總和</span><strong id="monthSplitTotal">$0</strong></div>
             <div class="summary-row"><span>驗證結果</span><strong id="monthValidationResult" class="good">一致</strong></div>
           </div>
         </div>
@@ -601,25 +602,48 @@
       </div>
 
       <div class="card">
-        <h2 class="section-title">建議清帳</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 class="section-title" style="margin:0;">✨ 建議清帳</h2>
+          <span id="ledgerLockBadge" style="font-size:12px;padding:3px 10px;border-radius:20px;background:#fff7ea;color:#c7792b;border:1px solid #ead7b2;">🔒 本期鎖定</span>
+        </div>
         <div class="settlement-list" id="settlementSuggestions"></div>
-        <div class="actions">
-          <button class="btn-sub" onclick="copySettlementSummary()">📋 複製清帳建議</button>
-          <button class="btn-sub" onclick="sendSettlementToLine()">🦉 寄往 LINE 群組</button>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+          <button class="btn-main" onclick="requestSettlement()" id="btnRequestSettlement">🦉 申請結清（發送明細至 LINE）</button>
+          <div id="bethControls" style="display:none;flex-direction:column;gap:8px;">
+            <button class="btn-main" style="background:#f0fff4;color:#2f9e44;border:1px solid #b2f2bb;" onclick="confirmSettlement()">✅ Finite！確認結清封存</button>
+            <button class="btn-sub" onclick="openLedger()">🔓 Alohomora 開帳（允許修改）</button>
+          </div>
+          <button class="btn-sub" id="btnCopySettlement" onclick="copySettlementSummary()">📋 複製清帳建議</button>
         </div>
       </div>
 
       <div class="card">
-        <h2 class="section-title">帳冊明細表</h2>
+        <h2 class="section-title">📜 本期帳冊明細</h2>
         <div class="table-shell" id="detailTableWrap"></div>
-        <div class="actions">
+        <div class="actions" style="margin-top:10px;">
           <button class="btn-sub" onclick="exportPDF()">📜 匯出 PDF 帳冊</button>
           <button class="btn-sub" onclick="copyTableSummary()">📋 複製帳冊摘要</button>
         </div>
       </div>
 
+      <div class="card" id="nextPeriodCard" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 class="section-title" style="margin:0;">🌙 未出帳款項</h2>
+          <span style="font-size:12px;padding:3px 10px;border-radius:20px;background:#f3f0ff;color:#7048e8;border:1px solid #d0bfff;">下期帳單</span>
+        </div>
+        <p style="font-size:13px;color:var(--muted);margin:0 0 10px;">結清後登入的新帳，將列入下一期計算。</p>
+        <div class="table-shell" id="nextPeriodTableWrap"></div>
+      </div>
 
+      <div class="card" id="historyLogCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 class="section-title" style="margin:0;">📖 結清歷史</h2>
+          <button class="btn-sub" style="font-size:12px;padding:6px 12px;" onclick="toggleHistoryLog()" id="btnToggleHistory">展開</button>
+        </div>
+        <div id="historyLogList" style="display:none;"></div>
+      </div>
     </section>
+
 
     <section class="page" id="page-settings">
       <div class="card">
@@ -788,9 +812,7 @@
         el.classList.toggle('active', el.dataset.page === page);
       });
       renderStickyNav();
-      if (page === 'ledger') {
-        renderLedgerPage();
-      }
+      if (page === 'ledger') renderLedgerPage();
     }
 
     function selectedMode() {
@@ -1746,22 +1768,443 @@
       });
     }
 
-    function computeBalances() {
+    // ===== 期別管理 =====
+    const PERIOD_KEY = 'dobbyPeriods';
+    let periods = []; // [{id, createdAt, createdBy, status:'open'|'pending'|'confirmed', confirmedAt, confirmedBy, snapshot}]
+
+    function loadPeriods() {
+      try { periods = JSON.parse(localStorage.getItem(PERIOD_KEY) || '[]'); } catch(e) { periods = []; }
+      if (!Array.isArray(periods)) periods = [];
+    }
+
+    function savePeriods() {
+      try { localStorage.setItem(PERIOD_KEY, JSON.stringify(periods)); } catch(e) {}
+    }
+
+    function currentPeriod() {
+      // 最新一筆 open 或 pending 的期別
+      return periods.find(function(p) { return p.status === 'open' || p.status === 'pending'; }) || null;
+    }
+
+    function latestConfirmedPeriod() {
+      const confirmed = periods.filter(function(p) { return p.status === 'confirmed'; });
+      if (!confirmed.length) return null;
+      return confirmed.reduce(function(a, b) { return new Date(a.confirmedAt) > new Date(b.confirmedAt) ? a : b; });
+    }
+
+    function isLedgerLocked() {
+      const cp = currentPeriod();
+      return cp ? cp.status === 'pending' : false;
+    }
+
+    // 本期帳目（結清後到現在）
+    function currentPeriodEntries() {
+      const lcp = latestConfirmedPeriod();
+      const cutoff = lcp ? new Date(lcp.confirmedAt) : null;
+      return entries.filter(function(e) {
+        if (e.status !== 'active') return false;
+        if (!cutoff) return true;
+        return new Date(e.createdAt) > cutoff;
+      });
+    }
+
+    // 若有鎖定中的期別，區分本期快照時間之前 vs 之後的帳
+    function snapshotCutoff() {
+      const cp = currentPeriod();
+      if (!cp || cp.status !== 'pending' || !cp.snapshotAt) return null;
+      return new Date(cp.snapshotAt);
+    }
+
+    function thisSettlementEntries() {
+      // 本期中，快照時間點之前的帳（進入結清計算）
+      const all = currentPeriodEntries();
+      const cut = snapshotCutoff();
+      if (!cut) return all;
+      return all.filter(function(e) { return new Date(e.createdAt) <= cut; });
+    }
+
+    function nextBillingEntries() {
+      // 快照之後登入的帳（未出帳款項）
+      const all = currentPeriodEntries();
+      const cut = snapshotCutoff();
+      if (!cut) return [];
+      return all.filter(function(e) { return new Date(e.createdAt) > cut; });
+    }
+
+    function computeBalancesFromEntries(ents) {
       const balances = {};
       PEOPLE.forEach(function(name) { balances[name] = 0; });
-      entries.filter(function(x) { return x.status === 'active'; }).forEach(function(entry) {
+      ents.forEach(function(entry) {
         if (entry.type === 'expense') {
-          entry.settlements.forEach(function(s) {
+          (entry.settlements || []).forEach(function(s) {
             balances[s.from] -= roundInt(s.amount);
-            balances[s.to] += roundInt(s.amount);
+            balances[s.to]   += roundInt(s.amount);
           });
         } else if (entry.type === 'checkout') {
           balances[entry.from] += roundInt(entry.amount);
-          balances[entry.to] -= roundInt(entry.amount);
+          balances[entry.to]   -= roundInt(entry.amount);
         }
       });
       return balances;
     }
+
+    function computeBalances() {
+      return computeBalancesFromEntries(thisSettlementEntries());
+    }
+
+    // 計算「原始應付/收」（不含 checkout）和「已付/收」（只算 checkout）
+    function computeDetailedBalances(ents) {
+      const raw = {};   // 只算 expense settlements
+      const paid = {};  // 只算 checkout
+      PEOPLE.forEach(function(name) { raw[name] = 0; paid[name] = 0; });
+      ents.forEach(function(entry) {
+        if (entry.type === 'expense') {
+          (entry.settlements || []).forEach(function(s) {
+            raw[s.from] -= roundInt(s.amount);
+            raw[s.to]   += roundInt(s.amount);
+          });
+        } else if (entry.type === 'checkout') {
+          paid[entry.from] += roundInt(entry.amount);
+          paid[entry.to]   -= roundInt(entry.amount);
+        }
+      });
+      return { raw: raw, paid: paid };
+    }
+
+    function buildSnapshotText(ents, label) {
+      // 文字明細
+      const expenseEnts = ents.filter(function(e) { return e.type === 'expense'; });
+      const checkoutEnts = ents.filter(function(e) { return e.type === 'checkout'; });
+      const balances = computeBalancesFromEntries(ents);
+      const suggestions = computeSettlementSuggestions(balances);
+      const total = expenseEnts.reduce(function(s, e) { return s + roundInt(e.total); }, 0);
+
+      const lines = [
+        '📋【多比結清對帳單】' + (label ? ' ' + label : ''),
+        '',
+        '💰 本期總支出：$' + total,
+        '📊 共 ' + expenseEnts.length + ' 筆',
+        ''
+      ];
+
+      if (expenseEnts.length) {
+        lines.push('🧾 帳冊明細：');
+        expenseEnts.forEach(function(e) {
+          lines.push('・' + formatEntryDate(e.createdAt) + ' ' + (e.note || '') + '（' + e.payer + ' 付）$' + formatMoney(e.total));
+        });
+        lines.push('');
+      }
+
+      if (checkoutEnts.length) {
+        lines.push('💸 已清帳紀錄：');
+        checkoutEnts.forEach(function(e) {
+          lines.push('・' + formatEntryDate(e.createdAt) + ' ' + e.from + ' ➜ ' + e.to + '：$' + formatMoney(e.amount) + (e.note ? '（' + e.note + '）' : ''));
+        });
+        lines.push('');
+      }
+
+      if (suggestions.length) {
+        lines.push('📌 建議清帳：');
+        suggestions.forEach(function(s) {
+          lines.push('・' + s.from + ' ➜ ' + s.to + '：$' + formatMoney(s.amount));
+        });
+      } else {
+        lines.push('帳目平衡，無需清帳 🟢');
+      }
+
+      lines.push('');
+      lines.push('確認收款後，請 Beth 至帳冊按「Finite！確認結清封存」。');
+      lines.push('https://bace0621.github.io/dobby-ledger/');
+      return lines.join('\n');
+    }
+
+    async function requestSettlement() {
+      if (isLedgerLocked()) {
+        showToast('本期已申請結清，等待 Beth 確認中');
+        return;
+      }
+      const ents = currentPeriodEntries();
+      const now = new Date();
+      const label = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
+
+      // 建立 pending 期別
+      const periodId = 'P' + now.getTime();
+      const period = {
+        id: periodId,
+        createdAt: now.toISOString(),
+        createdBy: CURRENT_USER,
+        status: 'pending',
+        snapshotAt: now.toISOString(),
+        label: label,
+        entryCount: ents.length
+      };
+      periods.unshift(period);
+      savePeriods();
+
+      const text = buildSnapshotText(ents, label);
+      const result = await sendExternalNotify(text, periodId);
+      if (result && result.ok !== false) {
+        showToast('🦉 對帳單已發送至 LINE！');
+        owlFly('🦉');
+      } else {
+        showToast('對帳單已產生，但 LINE 發送失敗');
+      }
+      renderLedgerPage();
+    }
+
+    function confirmSettlement() {
+      if (CURRENT_USER !== 'Beth') { alert('只有 Beth 可以確認結清。'); return; }
+      if (!confirm('✨ 確認封存本期帳目？封存後本期帳目將隱藏，開始累積下一期。')) return;
+      const cp = currentPeriod();
+      if (!cp) { showToast('找不到待確認的期別'); return; }
+      cp.status = 'confirmed';
+      cp.confirmedAt = new Date().toISOString();
+      cp.confirmedBy = 'Beth';
+      savePeriods();
+      showToast('✅ Finite！本期已封存，下一期開始！');
+      magicSparkle('✨');
+      renderLedgerPage();
+    }
+
+    function openLedger() {
+      if (CURRENT_USER !== 'Beth') { alert('只有 Beth 可以開帳。'); return; }
+      const cp = currentPeriod();
+      if (!cp) { showToast('目前沒有鎖定中的期別'); return; }
+      if (!confirm('🔓 Alohomora！解鎖本期帳目，允許修改？')) return;
+      cp.status = 'open';
+      cp.snapshotAt = null;
+      savePeriods();
+      showToast('🔓 帳本已解鎖，可以修改紀錄');
+      renderLedgerPage();
+    }
+
+    function toggleHistoryLog() {
+      const box = document.getElementById('historyLogList');
+      const btn = document.getElementById('btnToggleHistory');
+      const showing = box.style.display !== 'none';
+      box.style.display = showing ? 'none' : 'block';
+      btn.textContent = showing ? '展開' : '收起';
+      if (!showing) renderHistoryLog();
+    }
+
+    function renderHistoryLog() {
+      if (CURRENT_USER !== 'Beth') {
+        document.getElementById('historyLogList').innerHTML = '<p style="font-size:13px;color:var(--muted);">歷史卷宗僅供 Beth 調閱。</p>';
+        return;
+      }
+      const confirmed = periods.filter(function(p) { return p.status === 'confirmed'; });
+      if (!confirmed.length) {
+        document.getElementById('historyLogList').innerHTML = '<p style="font-size:13px;color:var(--muted);">尚無結清紀錄。</p>';
+        return;
+      }
+      let html = '';
+      confirmed.forEach(function(p) {
+        html += '<div style="padding:10px 0;border-bottom:1px solid var(--line);">';
+        html += '<div style="display:flex;justify-content:space-between;font-size:13px;">';
+        html += '<strong>' + (p.label || p.createdAt.slice(0,10)) + '</strong>';
+        html += '<span style="color:var(--ok);font-size:12px;">✅ 已結清</span>';
+        html += '</div>';
+        html += '<div style="font-size:12px;color:var(--muted);margin-top:4px;">';
+        html += '由 ' + (p.confirmedBy || 'Beth') + ' 於 ' + (p.confirmedAt || '').slice(0,10) + ' 確認封存';
+        html += '</div></div>';
+      });
+      document.getElementById('historyLogList').innerHTML = html;
+    }
+
+    function renderLedgerPage() {
+      loadPeriods();
+      const locked = isLedgerLocked();
+      const isAdmin = CURRENT_USER === 'Beth';
+      const settleEnts = thisSettlementEntries();
+      const nextEnts = nextBillingEntries();
+
+      // 期別標籤
+      const lcp = latestConfirmedPeriod();
+      const periodLabel = lcp ? ('結清後（' + (lcp.confirmedAt||'').slice(0,10) + ' 起）') : '全部期間';
+      document.getElementById('currentPeriodLabel').textContent = periodLabel;
+
+      // 鎖定 badge
+      const lockBadge = document.getElementById('ledgerLockBadge');
+      if (locked) {
+        lockBadge.textContent = '🔒 待確認結清';
+        lockBadge.style.background = '#fff3bf';
+        lockBadge.style.color = '#c77800';
+        lockBadge.style.borderColor = '#ffe066';
+      } else {
+        lockBadge.textContent = '🟢 記帳中';
+        lockBadge.style.background = '#d3f9d8';
+        lockBadge.style.color = '#2f9e44';
+        lockBadge.style.borderColor = '#b2f2bb';
+      }
+
+      // Beth 控制區
+      const bethCtrl = document.getElementById('bethControls');
+      if (isAdmin) {
+        bethCtrl.style.display = 'flex';
+        document.getElementById('btnRequestSettlement').textContent = locked ? '🦉 重新發送對帳單' : '🦉 申請結清（發送明細至 LINE）';
+      } else {
+        bethCtrl.style.display = 'none';
+      }
+
+      // 總覽
+      const expenseEnts = settleEnts.filter(function(e) { return e.type === 'expense'; });
+      const monthTotal = expenseEnts.reduce(function(s, e) { return s + roundInt(e.total); }, 0);
+      const splitTotal = expenseEnts.reduce(function(s, e) {
+        return s + (e.allocation||[]).reduce(function(ss, a) { return ss + roundInt(a.amount); }, 0);
+      }, 0);
+      const balanced = monthTotal === splitTotal;
+      document.getElementById('monthExpenseTotal').textContent = '$' + formatMoney(monthTotal);
+      document.getElementById('monthSplitTotal').textContent = '$' + formatMoney(splitTotal);
+      document.getElementById('monthValidationResult').textContent = balanced ? '一致' : '不一致';
+      document.getElementById('monthValidationResult').className = balanced ? 'good' : 'warn';
+      document.getElementById('ledgerStatusText').textContent = balanced ? '🟢 帳務一致' : '🔴 帳務異常';
+      document.getElementById('ledgerStatusText').className = balanced ? 'good' : 'warn';
+
+      // 金流顯影（含已付細節）
+      const detailed = computeDetailedBalances(settleEnts);
+      const balanceBox = document.getElementById('balanceSummary');
+      balanceBox.innerHTML = '';
+      PEOPLE.forEach(function(name) {
+        const rawVal = roundInt(detailed.raw[name]);
+        const paidVal = roundInt(detailed.paid[name]);
+        const netVal = rawVal + paidVal;
+        const isRecv = rawVal > 0;
+        const isPay = rawVal < 0;
+        const div = document.createElement('div');
+        div.className = 'status-card';
+        const badgeStyle = isRecv
+          ? 'background:#d3f9d8;color:#2f9e44;'
+          : isPay ? 'background:#ffe3e3;color:#d9485f;' : 'background:#f1f3f5;color:#868e96;';
+        const badgeText = isRecv ? '應收' : isPay ? '應付' : '已平衡';
+        const paidRow = (isRecv && paidVal < 0) || (isPay && paidVal > 0)
+          ? '<div class="summary-row"><span>' + (isRecv ? '已收款' : '已付') + '</span><strong style="color:var(--ok);">−$' + formatMoney(Math.abs(paidVal)) + '</strong></div>'
+          : '';
+        const netColor = netVal > 0 ? 'color:var(--ok);' : netVal < 0 ? 'color:var(--warn);' : '';
+        div.innerHTML = '<div class="status-top"><strong>' + name + '</strong>'
+          + '<span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700;' + badgeStyle + '">' + badgeText + '</span></div>'
+          + '<div class="summary-row"><span>' + (isRecv ? '原始應收' : '原始應付') + '</span><strong>$' + formatMoney(Math.abs(rawVal)) + '</strong></div>'
+          + paidRow
+          + '<div class="summary-row" style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px;"><span>還差</span><strong style="' + netColor + '">$' + formatMoney(Math.abs(netVal)) + '</strong></div>';
+        balanceBox.appendChild(div);
+      });
+
+      // 建議清帳
+      const balances = computeBalances();
+      const suggestions = computeSettlementSuggestions(balances);
+      const settlementBox = document.getElementById('settlementSuggestions');
+      settlementBox.innerHTML = '';
+      if (!suggestions.length) {
+        settlementBox.innerHTML = '<div class="settlement-card"><strong>目前無需清帳</strong><span class="good">帳目平衡 🟢</span></div>';
+      } else {
+        suggestions.forEach(function(item) {
+          const div = document.createElement('div');
+          div.className = 'settlement-card';
+          div.innerHTML = '<strong>' + item.from + ' ➜ ' + item.to + '</strong><span>$' + formatMoney(item.amount) + '</span>';
+          settlementBox.appendChild(div);
+        });
+      }
+
+      // 本期明細
+      renderDetailTable(expenseEnts, monthTotal, splitTotal);
+
+      // 未出帳款項
+      const nextCard = document.getElementById('nextPeriodCard');
+      const nextExpense = nextEnts.filter(function(e) { return e.type === 'expense'; });
+      if (nextExpense.length) {
+        nextCard.style.display = '';
+        const nextTotal = nextExpense.reduce(function(s,e){return s+roundInt(e.total);},0);
+        const nextSplit = nextExpense.reduce(function(s,e){return s+(e.allocation||[]).reduce(function(ss,a){return ss+roundInt(a.amount);},0);},0);
+        renderNextPeriodTable(nextExpense, nextTotal, nextSplit);
+      } else {
+        nextCard.style.display = 'none';
+      }
+
+      renderHistory();
+    }
+
+    function renderDetailTable(expenseEntries, monthTotal, splitTotal) {
+      const wrap = document.getElementById('detailTableWrap');
+      const visibleNames = PEOPLE;
+      let html = '<table><thead><tr><th>日期</th><th>項目</th><th>付款巫師</th><th class="num">總額</th>';
+      visibleNames.forEach(function(name) { html += '<th class="num">' + name + '</th>'; });
+      html += '<th>驗證</th></tr></thead><tbody>';
+      expenseEntries.forEach(function(entry) {
+        const rowTotal = (entry.allocation||[]).reduce(function(sum, item) { return sum + roundInt(item.amount); }, 0);
+        const ok = rowTotal === roundInt(entry.total);
+        const map = {};
+        (entry.allocation||[]).forEach(function(item) { map[item.name] = roundInt(item.amount); });
+        html += '<tr>'
+          + '<td>' + formatEntryDate(entry.createdAt) + '</td>'
+          + '<td>' + (entry.note || '') + '</td>'
+          + '<td>' + (entry.payer || '') + '</td>'
+          + '<td class="num">' + formatMoney(entry.total) + '</td>';
+        visibleNames.forEach(function(name) {
+          html += '<td class="num">' + formatMoney(map[name] || 0) + '</td>';
+        });
+        html += '<td>' + (ok ? '✅ 一致' : '❌') + '</td></tr>';
+      });
+      html += '</tbody><tfoot><tr><td colspan="3">總計</td><td class="num">' + formatMoney(monthTotal) + '</td>';
+      visibleNames.forEach(function(name) {
+        const personTotal = expenseEntries.reduce(function(sum, entry) {
+          const found = (entry.allocation||[]).find(function(item) { return item.name === name; });
+          return sum + roundInt(found ? found.amount : 0);
+        }, 0);
+        html += '<td class="num">' + formatMoney(personTotal) + '</td>';
+      });
+      html += '<td>' + (monthTotal === splitTotal ? '✅' : '❌') + '</td></tr></tfoot></table>';
+      wrap.innerHTML = html;
+    }
+
+    function renderNextPeriodTable(expenseEntries, total, splitTotal) {
+      const wrap = document.getElementById('nextPeriodTableWrap');
+      const visibleNames = PEOPLE;
+      let html = '<table><thead><tr><th>日期</th><th>項目</th><th>付款巫師</th><th class="num">總額</th>';
+      visibleNames.forEach(function(name) { html += '<th class="num">' + name + '</th>'; });
+      html += '</tr></thead><tbody>';
+      expenseEntries.forEach(function(entry) {
+        const map = {};
+        (entry.allocation||[]).forEach(function(item) { map[item.name] = roundInt(item.amount); });
+        html += '<tr>'
+          + '<td>' + formatEntryDate(entry.createdAt) + '</td>'
+          + '<td>' + (entry.note || '') + '</td>'
+          + '<td>' + (entry.payer || '') + '</td>'
+          + '<td class="num">' + formatMoney(entry.total) + '</td>';
+        visibleNames.forEach(function(name) {
+          html += '<td class="num">' + formatMoney(map[name] || 0) + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody><tfoot><tr><td colspan="3">小計</td><td class="num">' + formatMoney(total) + '</td>';
+      visibleNames.forEach(function(name) {
+        const personTotal = expenseEntries.reduce(function(sum, entry) {
+          const found = (entry.allocation||[]).find(function(item) { return item.name === name; });
+          return sum + roundInt(found ? found.amount : 0);
+        }, 0);
+        html += '<td class="num">' + formatMoney(personTotal) + '</td>';
+      });
+      html += '</tfoot></table>';
+      wrap.innerHTML = html;
+    }
+
+    function buildSettlementSummaryText() {
+      const balances = computeBalances();
+      const suggestions = computeSettlementSuggestions(balances);
+      if (!suggestions.length) return '📊【結算建議】\n目前無需清帳，帳目平衡。';
+      return ['📊【結算建議】', ''].concat(suggestions.map(function(item) {
+        return item.from + ' ➜ ' + item.to + '：$' + formatMoney(item.amount);
+      })).join('\n');
+    }
+
+    function copySettlementSummary() {
+      copyText(buildSettlementSummaryText(), '已複製清帳建議');
+    }
+
+    async function sendSettlementToLine() {
+      const result = await sendExternalNotify(buildSettlementSummaryText(), 'SETTLEMENT');
+      showToast(result && result.ok !== false ? '已發送結算建議到 LINE' : '發送失敗');
+    }
+
+
 
     function computeSettlementSuggestions(balances) {
       const creditors = [];
@@ -1785,151 +2228,40 @@
       return suggestions;
     }
 
-    function renderLedgerPage() {
-      const activeEntries = entries.filter(function(entry) { return entry.status === 'active'; });
-      const monthTotal = activeEntries.filter(function(entry) { return entry.type === 'expense'; }).reduce(function(sum, entry) {
-        return sum + roundInt(entry.total);
-      }, 0);
-      const splitTotal = activeEntries.filter(function(entry) { return entry.type === 'expense'; }).reduce(function(sum, entry) {
-        return sum + entry.allocation.reduce(function(sub, item) { return sub + roundInt(item.amount); }, 0);
-      }, 0);
-      const balanced = monthTotal === splitTotal;
-      document.getElementById('monthExpenseTotal').textContent = '$' + formatMoney(monthTotal);
-      document.getElementById('monthSplitTotal').textContent = '$' + formatMoney(splitTotal);
-      document.getElementById('ledgerStatusText').textContent = balanced ? '🟢 帳務一致' : '🔴 帳務異常';
-      document.getElementById('ledgerStatusText').className = balanced ? 'good' : 'warn';
-      document.getElementById('monthValidationResult').textContent = balanced ? '一致' : '不一致';
-      document.getElementById('monthValidationResult').className = balanced ? 'good' : 'warn';
-
-      const balances = computeBalances();
-      const totalBalance = Object.values(balances).reduce(function(sum, value) { return sum + value; }, 0);
-      if (totalBalance !== 0) {
-        document.getElementById('ledgerStatusText').textContent = '🔴 帳務異常';
-        document.getElementById('ledgerStatusText').className = 'warn';
-      }
-
-      const balanceBox = document.getElementById('balanceSummary');
-      balanceBox.innerHTML = '';
-      PEOPLE.forEach(function(name) {
-        const value = roundInt(balances[name]);
-        const div = document.createElement('div');
-        div.className = 'status-card';
-        div.innerHTML = '<div class="status-top"><strong>' + name + '</strong><span class="' + (value > 0 ? 'good' : (value < 0 ? 'warn' : 'info')) + '">' + (value > 0 ? '應收' : value < 0 ? '應付' : '已平衡') + '</span></div><div class="summary-row"><span>目前金額</span><strong>$' + formatMoney(Math.abs(value)) + '</strong></div>';
-        balanceBox.appendChild(div);
-      });
-
-      const suggestions = computeSettlementSuggestions(balances);
-      const settlementBox = document.getElementById('settlementSuggestions');
-      settlementBox.innerHTML = '';
-      if (!suggestions.length) {
-        settlementBox.innerHTML = '<div class="settlement-card"><strong>目前無需清帳</strong><span class="good">帳目平衡</span></div>';
-      } else {
-        suggestions.forEach(function(item) {
-          const div = document.createElement('div');
-          div.className = 'settlement-card';
-          div.innerHTML = '<strong>' + item.from + ' ➜ ' + item.to + '</strong><span>$' + formatMoney(item.amount) + '</span>';
-          settlementBox.appendChild(div);
-        });
-      }
-
-      renderDetailTable(activeEntries, monthTotal, splitTotal);
-      renderHistory();
-    }
-
-    function renderDetailTable(activeEntries, monthTotal, splitTotal) {
-      const wrap = document.getElementById('detailTableWrap');
-      const expenseEntries = activeEntries.filter(function(entry) { return entry.type === 'expense'; });
-      const visibleNames = PEOPLE;
-      let html = '<table><thead><tr><th>日期</th><th>項目</th><th>付款巫師</th><th class="num">總額</th>';
-      visibleNames.forEach(function(name) { html += '<th class="num">' + name + '</th>'; });
-      html += '<th>驗證</th></tr></thead><tbody>';
-      expenseEntries.forEach(function(entry) {
-        const rowTotal = entry.allocation.reduce(function(sum, item) { return sum + roundInt(item.amount); }, 0);
-        const ok = rowTotal === roundInt(entry.total);
-        const map = {};
-        entry.allocation.forEach(function(item) { map[item.name] = roundInt(item.amount); });
-        html += '<tr>' +
-          '<td>' + formatEntryDate(entry.createdAt) + '</td>' +
-          '<td>' + (entry.note || '') + '</td>' +
-          '<td>' + (entry.payer || '') + '</td>' +
-          '<td class="num">' + formatMoney(entry.total) + '</td>';
-        visibleNames.forEach(function(name) {
-          html += '<td class="num">' + formatMoney(map[name] || 0) + '</td>';
-        });
-        html += '<td>' + (ok ? '✅ 一致' : '❌ 不一致') + '</td></tr>';
-      });
-      html += '</tbody><tfoot><tr><td colspan="3">總計</td><td class="num">' + formatMoney(monthTotal) + '</td>';
-      visibleNames.forEach(function(name) {
-        const personTotal = expenseEntries.reduce(function(sum, entry) {
-          const found = entry.allocation.find(function(item) { return item.name === name; });
-          return sum + roundInt(found ? found.amount : 0);
-        }, 0);
-        html += '<td class="num">' + formatMoney(personTotal) + '</td>';
-      });
-      html += '<td>' + (monthTotal === splitTotal ? '✅' : '❌') + '</td></tr></tfoot></table>';
-      wrap.innerHTML = html;
-    }
-
-    function buildSettlementSummaryText() {
-      const balances = computeBalances();
-      const suggestions = computeSettlementSuggestions(balances);
-      if (!suggestions.length) return '📊【結算建議】\n目前無需清帳，帳目平衡。';
-      return ['📊【結算建議】', ''].concat(suggestions.map(function(item) {
-        return item.from + ' ➜ ' + item.to + '：$' + formatMoney(item.amount);
-      })).join('\n');
-    }
-
-    function copySettlementSummary() {
-      copyText(buildSettlementSummaryText(), '已複製結算建議');
-    }
-
-    async function sendSettlementToLine() {
-      const result = await sendExternalNotify(buildSettlementSummaryText(), 'SETTLEMENT');
-      showToast(result && result.ok !== false ? '已發送結算建議到 LINE' : '發送失敗');
-    }
-
     function copyTableSummary() {
-      const activeEntries = entries.filter(function(entry) { return entry.status === 'active' && entry.type === 'expense'; });
+      const ents = thisSettlementEntries().filter(function(e) { return e.type === 'expense'; });
       const lines = ['【分帳帳冊明細表】'];
-      activeEntries.forEach(function(entry) {
+      ents.forEach(function(entry) {
         lines.push(formatEntryDate(entry.createdAt) + '｜' + (entry.note || '') + '｜' + entry.payer + '｜$' + formatMoney(entry.total));
       });
       copyText(lines.join('\n'), '已複製表格摘要');
     }
 
     function exportPDF() {
-      const activeEntries = entries.filter(function(entry) { return entry.status === 'active' && entry.type === 'expense'; });
       const balances = computeBalances();
       const suggestions = computeSettlementSuggestions(balances);
       const table = document.getElementById('detailTableWrap').innerHTML;
-      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>分帳帳冊明細表</title><style>
-        body{font-family:Arial,"Noto Sans TC",sans-serif;padding:24px;color:#333}
-        h1{font-size:22px;margin-bottom:8px}
-        p{margin:0 0 16px;color:#666}
-        table{width:100%;border-collapse:collapse;font-size:13px}
-        th,td{border:1px solid #ddd;padding:8px;text-align:left}
-        th,td.num{text-align:right}
-        th{background:#f7f7f7}
-        tfoot td{font-weight:700;background:#fafafa}
-        .block{margin-top:20px}
-    
-    .tabs { display: none !important; }
-    .hidden { display: none !important; }
-    .sticky-inner.one-button { grid-template-columns: 1fr; }
-    .history-card.dimmed { opacity: .55; filter: grayscale(.15); }
-
-  </style></head><body>
-        <h1>分帳帳冊明細表</h1>
-        <p>匯出時間：${nowText()}</p>
-        ${table}
-        <div class="block"><h2>結算建議</h2><p>${suggestions.length ? suggestions.map(function(item){return item.from + ' → ' + item.to + '：$' + formatMoney(item.amount);}).join('<br>') : '目前無需清帳'}</p></div>
-      </body></html>`;
+      const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>分帳帳冊明細表</title><style>'
+        + 'body{font-family:Arial,"Noto Sans TC",sans-serif;padding:24px;color:#333}'
+        + 'h1{font-size:22px;margin-bottom:8px}p{margin:0 0 16px;color:#666}'
+        + 'table{width:100%;border-collapse:collapse;font-size:13px}'
+        + 'th,td{border:1px solid #ddd;padding:8px;text-align:left}'
+        + 'th,td.num{text-align:right}th{background:#f7f7f7}'
+        + 'tfoot td{font-weight:700;background:#fafafa}.block{margin-top:20px}'
+        + '</style></head><body>'
+        + '<h1>分帳帳冊明細表</h1>'
+        + '<p>匯出時間：' + nowText() + '</p>'
+        + table
+        + '<div class="block"><h2>結算建議</h2><p>'
+        + (suggestions.length ? suggestions.map(function(item){ return item.from + ' → ' + item.to + '：$' + formatMoney(item.amount); }).join('<br>') : '目前無需清帳')
+        + '</p></div></body></html>';
       const win = window.open('', '_blank');
       win.document.write(html);
       win.document.close();
       setTimeout(function() { win.print(); }, 400);
     }
 
+    loadPeriods();
     loadConfig();
     loadEntriesFromLocal();
     applyRoleAndUserFromQuery();
